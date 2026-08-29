@@ -1,0 +1,17 @@
+services:
+  notes-db:
+    image: postgres:16
+    container_name: xhblogs-notes-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: xhblogs_notes
+      POSTGRES_USER: xhblogs
+      POSTGRES_PASSWORD: xhblogs123
+    ports:
+      - "5433:5432"
+    volumes:
+      - notes_db_data:/var/lib/postgresql/data
+      - ./docker/notes-db/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+
+volumes:
+  notes_db_data:
