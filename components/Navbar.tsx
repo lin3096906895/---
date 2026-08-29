@@ -95,7 +95,7 @@ export default function Navbar() {
           >
             {siteConfig.navTitle || siteConfig.authorName}
             <span className="text-indigo-500 mx-1">{siteConfig.navSuffix || "的"}</span>
-            {siteConfig.navAfter || "秘密花园"}
+            {siteConfig.navAfter || "纳西妲花园"}
           </Link>
           <nav className="flex gap-8 text-sm font-bold">
             {navLinks.map((link) => {

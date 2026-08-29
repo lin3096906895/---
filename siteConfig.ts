@@ -1,11 +1,11 @@
 export const siteConfig = {
-  title: "纳西妲的秘密花园 | XingHuiSama",
+  title: "Hpearcl的纳西妲花园",
   faviconUrl: "/nahida/avatar.jpg",
-  authorName: "XingHuiSama",
+  authorName: "Hpearcl",
   bio: "在代码、学习和一点点森林气息里慢慢搭建自己的小站。",
-  navTitle: "XingHuiSama",
+  navTitle: "Hpearcl",
   navSuffix: "的",
-  navAfter: "秘密花园",
+  navAfter: "纳西妲花园",
   avatarUrl: "/nahida/avatar.jpg",
   useGradient: false,
   themeColors: ["#d9f99d", "#86efac", "#4ade80", "#22c55e"],
@@ -91,6 +91,6 @@ export const siteConfig = {
     temperature: 0.85,
   },
   friendLinkApplyFormat:
-    "名称：XingHuiSama的秘密花园\n简介：代码、学习与森林气息的记录\n链接：https://www.xinghuisama.top\n头像：/nahida/avatar.jpg",
+    "名称：Hpearcl的纳西妲花园\n简介：代码、学习与森林气息的记录\n链接：https://你的站点地址\n头像：/nahida/avatar.jpg",
   enableLevelSystem: true,
 };
