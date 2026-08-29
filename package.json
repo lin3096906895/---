@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "notes:import": "node scripts/import-notes.mjs",
-    "notes:import:local": "node scripts/import-notes.mjs \"F:\\个人博客2\\笔记\""
+    "notes:import:local": "node scripts/import-notes.mjs \"F:\\个人博客2\\笔记\"",
+    "notes:watch:local": "node scripts/import-notes.mjs \"F:\\个人博客2\\笔记\" --watch"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

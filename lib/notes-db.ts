@@ -7,7 +7,6 @@ const connectionString =
     : localConnection;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __notesDbPool: Pool | undefined;
 }
 
@@ -54,9 +53,16 @@ export async function listNotesArchive(params: {
   if (params.query?.trim()) {
     values.push(params.query.trim());
     where.push(
-      `(to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(excerpt, '') || ' ' || coalesce(content, '')) @@ websearch_to_tsquery('simple', $${values.length})
+      `(to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(excerpt, '') || ' ' || coalesce(content, '') || ' ' || array_to_string(tags, ' ')) @@ websearch_to_tsquery('simple', $${values.length})
+        OR $${values.length} = ANY(tags)
         OR title ILIKE '%' || $${values.length} || '%'
-        OR excerpt ILIKE '%' || $${values.length} || '%')`
+        OR excerpt ILIKE '%' || $${values.length} || '%'
+        OR content ILIKE '%' || $${values.length} || '%'
+        OR EXISTS (
+          SELECT 1
+          FROM unnest(tags) AS tag_name
+          WHERE tag_name ILIKE '%' || $${values.length} || '%'
+        ))`
     );
   }
 
@@ -79,6 +85,20 @@ export async function listNotesArchive(params: {
 
   const { rows } = await notesDbPool.query<NoteArchiveListItem>(sql, values);
   return rows;
+}
+
+export async function getNoteArchiveBySlug(slug: string) {
+  const { rows } = await notesDbPool.query<NoteArchiveRow>(
+    `
+    SELECT id, slug, title, excerpt, content, tags, source_path, category, published_at, created_at, updated_at
+    FROM notes_archive
+    WHERE slug = $1
+    LIMIT 1
+    `,
+    [slug]
+  );
+
+  return rows[0] ?? null;
 }
 
 export async function getNotesArchiveStats() {
