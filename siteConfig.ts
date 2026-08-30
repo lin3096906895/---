@@ -2,7 +2,7 @@ export const siteConfig = {
   title: "Hpearcl的纳西妲花园",
   faviconUrl: "/nahida/avatar.jpg",
   authorName: "Hpearcl",
-  bio: "在代码、学习和一点点森林气息里慢慢搭建自己的小站。",
+  bio: "软件工程专业学生，正在把想法、笔记和项目慢慢整理成自己的小站。",
   navTitle: "Hpearcl",
   navSuffix: "的",
   navAfter: "纳西妲花园",
@@ -91,6 +91,6 @@ export const siteConfig = {
     temperature: 0.85,
   },
   friendLinkApplyFormat:
-    "名称：Hpearcl的纳西妲花园\n简介：代码、学习与森林气息的记录\n链接：https://你的站点地址\n头像：/nahida/avatar.jpg",
+    "名称：Hpearcl的纳西妲花园\n简介：软件工程专业学生的个人博客\n链接：https://你的站点地址\n头像：/nahida/avatar.jpg",
   enableLevelSystem: true,
 };
