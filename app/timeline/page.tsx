@@ -12,6 +12,22 @@ export const metadata = {
   title: "归档与探索 | " + siteConfig.title,
 };
 
+function normalizeDate(value: unknown) {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "1970-01-01";
+    return value.toISOString().replace("T", " ").slice(0, 19);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "1970-01-01";
+    if (trimmed.includes("T")) return trimmed.replace("T", " ").slice(0, 19);
+    return trimmed;
+  }
+
+  return "1970-01-01";
+}
+
 function loadPostsFromDir(dirPath: string) {
   if (!fs.existsSync(dirPath)) return [];
 
@@ -28,7 +44,7 @@ function loadPostsFromDir(dirPath: string) {
       return {
         slug,
         title: data.title || '无标题',
-        date: data.date || '1970-01-01',
+        date: normalizeDate(data.date || '1970-01-01'),
         description: data.description || '',
         tags: postTags,
         cover: data.cover || siteConfig.defaultPostCover,

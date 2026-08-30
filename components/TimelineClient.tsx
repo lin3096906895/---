@@ -6,6 +6,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, LayoutGrid, ListTree, Calendar, Hash, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 
+function formatTimelineDate(value: unknown) {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    return value.toISOString().slice(0, 10);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (trimmed.includes("T")) return trimmed.slice(0, 10);
+    return trimmed.split(" ")[0];
+  }
+
+  return "";
+}
+
 export default function TimelineClient({ posts: initialPosts, tags }: { posts: any[], tags: { name: string, count: number }[] }) {
   const [posts, setPosts] = useState(initialPosts);
   const [selectedTag, setSelectedTag] = useState<string>('All');
@@ -124,7 +140,7 @@ export default function TimelineClient({ posts: initialPosts, tags }: { posts: a
                             {post.title}
                           </h4>
                           <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md shrink-0">
-                            {post.date.split(' ')[0]}
+                            {formatTimelineDate(post.date)}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">
@@ -207,7 +223,7 @@ export default function TimelineClient({ posts: initialPosts, tags }: { posts: a
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                           {/* 🌟 日期标签微缩 */}
                           <span className="absolute bottom-2 left-2 md:bottom-3 md:left-4 text-white/90 text-[9px] md:text-xs font-mono font-bold bg-black/40 backdrop-blur-sm px-1.5 py-0.5 md:px-2 md:py-1 rounded flex items-center gap-1">
-                            <Calendar size={10} className="md:w-3 md:h-3"/> {post.date.split(' ')[0]}
+                            <Calendar size={10} className="md:w-3 md:h-3"/> {formatTimelineDate(post.date)}
                           </span>
                         </div>
 

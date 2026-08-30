@@ -3,6 +3,22 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+function formatTimelineDate(value: unknown) {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    return value.toISOString().slice(0, 10);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (trimmed.includes("T")) return trimmed.slice(0, 10);
+    return trimmed.split(" ")[0];
+  }
+
+  return "";
+}
+
 export default function TimelineNode({ post, index }: { post: any, index: number }) {
   // 判断是放在左边还是右边（偶数左，奇数右）
   const isLeft = index % 2 === 0;
@@ -40,7 +56,7 @@ export default function TimelineNode({ post, index }: { post: any, index: number
             <div className="flex items-center justify-between mb-3">
               <div className="text-indigo-600 dark:text-indigo-400 font-bold text-[11px] flex items-center gap-1 uppercase tracking-wider">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                {post.date}
+                {formatTimelineDate(post.date)}
               </div>
             </div>
 
