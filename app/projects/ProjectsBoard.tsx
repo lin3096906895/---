@@ -105,29 +105,42 @@ export default function ProjectsBoard() {
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative block h-full overflow-hidden rounded-[28px] border border-white/40 bg-white/60 shadow-xl backdrop-blur-xl transition-all duration-700 hover:-translate-y-1 hover:shadow-emerald-500/20 dark:border-white/10 dark:bg-slate-900/50"
+                className="group relative block h-full overflow-hidden rounded-[24px] border border-white/35 bg-white/55 shadow-xl transition-all duration-700 hover:-translate-y-1 hover:shadow-emerald-500/20 dark:border-white/10 dark:bg-slate-900/55"
               >
                 <div
-                  className="absolute inset-0 bg-cover bg-center opacity-30 transition-transform duration-700 group-hover:scale-105"
+                  className="absolute inset-0 bg-cover transition-transform duration-700 group-hover:scale-105"
                   style={{
                     backgroundImage: `url(${project.coverImage || "/nahida/bg-1.jpg"})`,
+                    backgroundPosition: project.coverPosition || "center center",
+                    filter: "saturate(1.08) brightness(0.95)",
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-white/55 to-emerald-200/40 dark:from-slate-950/60 dark:via-slate-900/65 dark:to-emerald-950/50" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(74,222,128,0.18),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(236,72,153,0.08),transparent_35%)]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/68 via-white/42 to-emerald-100/28 dark:from-slate-950/72 dark:via-slate-900/58 dark:to-emerald-950/45" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.26),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(74,222,128,0.2),transparent_38%)]" />
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-300 via-lime-200 to-teal-300 opacity-80" />
 
-                <div className="relative z-10 flex min-h-[360px] flex-col p-6 md:p-8">
-                  <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <span className="text-4xl drop-shadow-sm">{project.icon}</span>
-                      <h2 className="text-2xl font-bold text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
-                        {project.name}
-                      </h2>
+                <div className="relative z-10 flex min-h-[340px] flex-col p-6 md:p-7">
+                  <div className="mb-6 flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/55 text-4xl shadow-md backdrop-blur-sm dark:bg-white/10">
+                        {project.icon}
+                      </span>
+                      <div className="pt-1">
+                        <h2 className="text-2xl font-black text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
+                          {project.name}
+                        </h2>
+                        <div className="mt-2 flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-emerald-700 dark:text-emerald-200">
+                          <span className="rounded-full border border-emerald-500/20 bg-white/50 px-2 py-1 backdrop-blur-sm dark:bg-white/10">
+                            {project.platform === "gitee" ? "GITEE" : "GITHUB"}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400">项目展示</span>
+                        </div>
+                      </div>
                     </div>
                     <RepositoryIcon platform={project.platform} />
                   </div>
 
-                  <p className="mb-6 min-h-[72px] line-clamp-3 text-sm leading-relaxed text-slate-700 font-serif dark:text-slate-200">
+                  <p className="mb-6 min-h-[72px] line-clamp-3 text-[15px] leading-relaxed text-slate-800 font-serif dark:text-slate-200">
                     {project.description}
                   </p>
 
@@ -135,7 +148,7 @@ export default function ProjectsBoard() {
                     {project.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-md border border-emerald-500/20 bg-white/55 px-3 py-1 text-[10px] font-bold tracking-wider text-emerald-700 shadow-sm uppercase backdrop-blur-sm dark:bg-white/10 dark:text-emerald-200"
+                        className="rounded-full border border-emerald-500/20 bg-white/55 px-3 py-1 text-[10px] font-black tracking-wider text-emerald-700 shadow-sm uppercase backdrop-blur-sm dark:bg-white/10 dark:text-emerald-200"
                       >
                         {tag}
                       </span>

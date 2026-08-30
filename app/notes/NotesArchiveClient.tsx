@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, CalendarDays, FolderOpen, Search, Tag } from "lucide-react";
+import { BookOpen, Search } from "lucide-react";
 
 type NoteItem = {
   id: number;
@@ -53,21 +53,18 @@ export default function NotesArchiveClient({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 sm:px-10">
-      <section className="mb-8 rounded-[28px] border border-white/40 bg-white/50 p-6 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/45">
+      <section className="mb-8 rounded-[24px] border border-white/30 bg-white/35 p-5 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/28">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black tracking-widest text-slate-900 dark:text-white">笔记归档</h1>
-            <p className="mt-3 max-w-2xl font-serif text-slate-600 dark:text-slate-400">
-              本地 Markdown 笔记已导入数据库。这里展示标题、摘要、标签和分类，方便快速检索。
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
-            <BookOpen size={16} />
-            共 {initialStats.total} 篇
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">笔记归档</h1>
+            <div className="mt-2 flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+              <BookOpen size={16} />
+              共 {initialStats.total} 篇
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
@@ -95,56 +92,46 @@ export default function NotesArchiveClient({
         </div>
       </section>
 
-      <div className="mb-8 flex flex-wrap gap-3 text-sm text-slate-500 dark:text-slate-400">
-        <span className="flex items-center gap-2">
-          <FolderOpen size={15} /> 分类检索
-        </span>
-        <span className="flex items-center gap-2">
-          <Tag size={15} /> 标签过滤
-        </span>
-        <span className="flex items-center gap-2">
-          <CalendarDays size={15} /> 时间排序
-        </span>
-      </div>
-
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         {filteredItems.map((item) => (
           <article
             key={item.id}
-            className="group rounded-3xl border border-white/40 bg-white/60 p-6 shadow-xl backdrop-blur-xl transition-transform hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900/45"
+            className="group overflow-hidden rounded-[24px] border border-white/35 bg-white/60 shadow-lg transition-transform hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900/42"
           >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-2 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
-                  <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-700 dark:text-emerald-300">
-                    {item.category}
-                  </span>
-                  <span className="rounded-md bg-slate-500/10 px-2 py-1 text-slate-600 dark:text-slate-300">
-                    {formatDate(item.published_at)}
-                  </span>
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
-                  {item.title}
-                </h2>
+            <div className="relative aspect-[16/7] overflow-hidden">
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(236,253,245,0.65),rgba(16,185,129,0.18))]" />
+              <div className="absolute left-4 top-4 flex gap-2 text-[10px] font-bold uppercase tracking-wider">
+                <span className="rounded-md bg-white/75 px-2 py-1 text-emerald-800 backdrop-blur dark:bg-slate-950/45 dark:text-emerald-200">
+                  {item.category}
+                </span>
+                <span className="rounded-md bg-white/75 px-2 py-1 text-slate-700 backdrop-blur dark:bg-slate-950/45 dark:text-slate-200">
+                  {formatDate(item.published_at)}
+                </span>
               </div>
             </div>
 
-            <p className="mb-5 min-h-[72px] line-clamp-3 text-sm leading-relaxed text-slate-700 font-serif dark:text-slate-300">
+            <div className="p-5">
+              <h2 className="mb-3 text-[1.1rem] font-black text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
+                {item.title}
+              </h2>
+
+              <p className="mb-5 min-h-[72px] line-clamp-3 text-sm leading-relaxed text-slate-700 font-serif dark:text-slate-300">
               {item.excerpt}
-            </p>
+              </p>
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              {item.tags.map((tagName) => (
-                <span
-                  key={tagName}
-                  className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
-                >
-                  {tagName}
-                </span>
-              ))}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {item.tags.map((tagName) => (
+                  <span
+                    key={tagName}
+                    className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
+                  >
+                    {tagName}
+                  </span>
+                ))}
+              </div>
+
+              <div className="truncate text-xs text-slate-400">{item.source_path}</div>
             </div>
-
-            <div className="truncate text-xs text-slate-400">{item.source_path}</div>
           </article>
         ))}
 

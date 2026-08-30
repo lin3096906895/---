@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, FolderOpen, Hash, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarDays, FolderOpen, Hash } from "lucide-react";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
@@ -14,6 +14,7 @@ import "highlight.js/styles/atom-one-dark.css";
 
 import Navbar from "../../../components/Navbar";
 import PageTransition from "../../../components/PageTransition";
+import ClientTOC from "../../../components/ClientTOC";
 import { siteConfig } from "../../../siteConfig";
 import { getNoteArchiveBySlug } from "../../../lib/notes-db";
 
@@ -42,6 +43,22 @@ function pickNahidaCover(slug: string) {
   const covers = ["/nahida/bg-1.jpg", "/nahida/bg-2.jpg", "/nahida/bg-3.jpg"];
   const hash = slug.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return covers[hash % covers.length];
+}
+
+function extractToc(content: string) {
+  const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+  const toc = [];
+  let match;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    toc.push({
+      level: match[1].length,
+      text: match[2].trim(),
+      id: match[2].trim().toLowerCase().replace(/\s+/g, "-"),
+    });
+  }
+
+  return toc;
 }
 
 async function renderMarkdown(content: string) {
@@ -100,40 +117,37 @@ export default async function NoteDetail({
 
   const contentHtml = await renderMarkdown(note.content);
   const cover = pickNahidaCover(note.slug);
+  const toc = extractToc(note.content);
 
   return (
     <div className="relative min-h-screen pb-20">
       <Navbar />
       <PageTransition>
-        <main className="mx-auto mt-24 flex w-[95%] max-w-6xl flex-col gap-6 px-0 md:mt-28 lg:flex-row lg:gap-8">
-          <article className="flex-1 overflow-hidden rounded-[36px] border border-white/40 bg-white/60 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-800/50">
-            <div className="relative aspect-[16/7] w-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+        <main className="mx-auto mt-24 flex w-[95%] max-w-6xl flex-col gap-6 px-0 md:mt-28 lg:flex-row lg:items-start lg:gap-6">
+          <article className="flex-1 overflow-hidden rounded-[28px] border border-white/35 bg-white/55 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-800/40">
+            <div className="relative aspect-[16/8] w-full overflow-hidden bg-slate-200 dark:bg-slate-700">
               <Image
                 src={cover}
                 alt="笔记封面"
                 fill
                 sizes="100vw"
-                className="object-cover opacity-90 transition-transform duration-1000 hover:scale-105"
+                className="object-cover object-[center_18%] opacity-90 transition-transform duration-1000 hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-transparent" />
             </div>
 
-            <div className="p-5 md:p-12">
-              <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="p-5 md:p-10">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <Link
                   href="/notes"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
                 >
                   <ArrowLeft size={16} />
                   返回列表
                 </Link>
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-300">
-                  <Sparkles size={14} />
-                  Note Detail
-                </div>
               </div>
 
-              <header className="mb-8 border-b border-slate-200/70 pb-6 dark:border-slate-700/70">
+              <header className="mb-8">
                 <div className="mb-3 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
                   <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-700 dark:text-emerald-300">
                     {note.category}
@@ -143,11 +157,11 @@ export default async function NoteDetail({
                   </span>
                 </div>
 
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+                <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-4xl">
                   {note.title}
                 </h1>
 
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {note.tags.map((tag) => (
                     <span
                       key={tag}
@@ -162,10 +176,10 @@ export default async function NoteDetail({
 
               <div className="prose prose-slate dark:prose-invert prose-base md:prose-lg max-w-none text-slate-800 transition-colors duration-700 dark:text-slate-200">
                 <style>{`
-                  .prose h1 { font-size: 1.9rem !important; font-weight: 900 !important; margin-bottom: 1.2rem !important; margin-top: 2rem !important; line-height: 1.3 !important; color: inherit !important; }
-                  .prose h2 { font-size: 1.5rem !important; font-weight: 800 !important; margin-bottom: 1rem !important; margin-top: 1.6rem !important; color: inherit !important; }
-                  .prose h3 { font-size: 1.2rem !important; font-weight: 700 !important; margin-bottom: 0.8rem !important; color: inherit !important; }
-                  .prose p { font-size: 0.98rem !important; line-height: 1.8 !important; color: inherit !important; }
+                  .prose h1 { font-size: 1.85rem !important; font-weight: 900 !important; margin-bottom: 1.1rem !important; margin-top: 1.8rem !important; line-height: 1.3 !important; color: inherit !important; }
+                  .prose h2 { font-size: 1.45rem !important; font-weight: 800 !important; margin-bottom: 0.95rem !important; margin-top: 1.45rem !important; color: inherit !important; }
+                  .prose h3 { font-size: 1.15rem !important; font-weight: 700 !important; margin-bottom: 0.75rem !important; color: inherit !important; }
+                  .prose p { font-size: 0.98rem !important; line-height: 1.85 !important; color: inherit !important; }
                   .prose a { color: #059669 !important; text-decoration: none !important; font-weight: 700 !important; border-bottom: 1px dashed #059669 !important; }
                   .dark .prose a { color: #6ee7b7 !important; border-bottom-color: #6ee7b7 !important; }
                   .prose ul { list-style-type: disc !important; padding-left: 1.5rem !important; }
@@ -173,27 +187,27 @@ export default async function NoteDetail({
                   .prose li { display: list-item !important; margin-bottom: 0.45rem !important; }
                   .prose blockquote {
                     border-left: 4px solid #10b981 !important;
-                    background-color: rgba(16, 185, 129, 0.06) !important;
-                    padding: 1rem 1.2rem !important;
-                    margin: 1.5rem 0 !important;
-                    border-radius: 0 1rem 1rem 0 !important;
+                    background-color: rgba(16, 185, 129, 0.055) !important;
+                    padding: 0.95rem 1.1rem !important;
+                    margin: 1.4rem 0 !important;
+                    border-radius: 0 0.9rem 0.9rem 0 !important;
                     color: #475569 !important;
                   }
                   .dark .prose blockquote {
-                    background-color: rgba(16, 185, 129, 0.1) !important;
+                    background-color: rgba(16, 185, 129, 0.09) !important;
                     color: #cbd5e1 !important;
                   }
                   .prose pre {
-                    background: linear-gradient(180deg, rgba(247, 255, 250, 0.98), rgba(236, 253, 245, 0.96)) !important;
+                    background: linear-gradient(180deg, rgba(247, 255, 250, 0.92), rgba(236, 253, 245, 0.88)) !important;
                     color: #0f172a !important;
-                    padding: 1rem !important;
-                    border-radius: 1rem !important;
+                    padding: 0.95rem !important;
+                    border-radius: 0.85rem !important;
                     overflow-x: auto !important;
                     border: 1px solid rgba(16, 185, 129, 0.14) !important;
                     box-shadow: 0 18px 40px rgba(16, 185, 129, 0.08) !important;
                   }
                   .dark .prose pre {
-                    background: linear-gradient(180deg, rgba(3, 21, 18, 0.92), rgba(6, 39, 29, 0.9)) !important;
+                    background: linear-gradient(180deg, rgba(3, 21, 18, 0.88), rgba(6, 39, 29, 0.84)) !important;
                     color: #d1fae5 !important;
                     border-color: rgba(110, 231, 183, 0.18) !important;
                     box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35) !important;
@@ -215,8 +229,8 @@ export default async function NoteDetail({
                     display: block !important;
                     max-width: 100% !important;
                     height: auto !important;
-                    margin: 1.5rem auto !important;
-                    border-radius: 1rem !important;
+                    margin: 1.3rem auto !important;
+                    border-radius: 0.85rem !important;
                   }
                   .prose pre code .hljs-comment, .prose pre code .hljs-quote { color: #6b7280 !important; font-style: italic !important; }
                   .prose pre code .hljs-doctag, .prose pre code .hljs-keyword, .prose pre code .hljs-formula { color: #8b5cf6 !important; }
@@ -233,27 +247,31 @@ export default async function NoteDetail({
             </div>
           </article>
 
-          <aside className="w-full flex-shrink-0 lg:w-[320px]">
-            <div className="rounded-[28px] border border-white/40 bg-white/60 p-6 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-800/50">
-              <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                <FolderOpen size={16} />
-                文章信息
-              </div>
-              <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-slate-400">发布时间</div>
-                  <div className="mt-1 flex items-center gap-2 font-medium">
-                    <CalendarDays size={14} />
-                    {formatDate(note.published_at)}
+          <aside className="w-full flex-shrink-0 lg:w-[280px]">
+            <div className="sticky top-28 flex flex-col gap-6">
+              {toc.length > 0 && <ClientTOC toc={toc} />}
+
+              <div className="rounded-[22px] border border-white/30 bg-white/40 p-5 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-800/35">
+                <div className="mb-4 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                  <FolderOpen size={16} />
+                  文章信息
+                </div>
+                <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-slate-400">发布时间</div>
+                    <div className="mt-1 flex items-center gap-2 font-medium">
+                      <CalendarDays size={14} />
+                      {formatDate(note.published_at)}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-slate-400">分类</div>
-                  <div className="mt-1">{note.category}</div>
-                </div>
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-slate-400">来源路径</div>
-                  <div className="mt-1 break-all text-xs">{note.source_path}</div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-slate-400">分类</div>
+                    <div className="mt-1">{note.category}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-slate-400">来源路径</div>
+                    <div className="mt-1 break-all text-xs">{note.source_path}</div>
+                  </div>
                 </div>
               </div>
             </div>

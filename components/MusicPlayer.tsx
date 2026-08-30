@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import { siteConfig } from '../siteConfig';
 
 // 安全解析 LRC 歌词
 function parseLrc(lrcText: string) {
@@ -65,7 +66,7 @@ export default function CloudPlayer({ songIds }: { songIds: string[] }) {
               id: song.id,
               title: song.name || '未知歌曲',
               artist: song.artist || '未知歌手',
-              cover: song.cover || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=300',
+              cover: song.cover || siteConfig.photoWallImage,
               src: song.url,
               lrcUrl: song.lrc
             };

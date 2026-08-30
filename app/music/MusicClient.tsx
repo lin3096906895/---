@@ -7,6 +7,7 @@ import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import { useMusic } from '../../components/MusicProvider';
 import Comments from '../../components/Comments';
+import { siteConfig } from '../../siteConfig';
 
 export default function MusicClient() {
   const {
@@ -127,7 +128,7 @@ export default function MusicClient() {
     );
   }
 
-  const songCover = currentSong.cover || currentSong.pic || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000&auto=format&fit=crop";
+  const songCover = currentSong.cover || currentSong.pic || siteConfig.photoWallImage;
 
   return (
     <div className="min-h-screen relative pb-10 flex flex-col">

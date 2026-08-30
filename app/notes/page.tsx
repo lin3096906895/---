@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "笔记归档 | " + siteConfig.title,
-  description: "本地 Markdown 笔记导入后的在线检索归档库",
+  description: "笔记归档与检索",
 };
 
 function formatDate(value: string | Date) {
@@ -81,27 +81,28 @@ export default async function NotesPage({
       <Navbar />
       <PageTransition>
         <div className="mx-auto mt-24 w-full max-w-6xl px-4 sm:px-10">
-          <section className="mb-8 rounded-[28px] border border-white/40 bg-white/45 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-slate-900/35">
-            <div className="mx-auto max-w-4xl text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-700 dark:text-emerald-300">
-                <Sparkles size={12} />
-                Notes Archive
+          <section className="mb-8 rounded-[24px] border border-white/30 bg-white/35 p-5 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/28">
+            <div className="mx-auto flex max-w-4xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="text-center md:text-left">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-700 dark:text-emerald-300">
+                  <Sparkles size={12} />
+                  Notes Archive
+                </div>
+                <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white">笔记归档</h1>
+                <div className="mt-2 flex items-center justify-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 md:justify-start">
+                  <BookOpen size={16} />
+                  共 {stats.total} 篇
+                </div>
               </div>
-              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900 dark:text-white">笔记归档</h1>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <BookOpen size={16} />
-                共 {stats.total} 篇
-              </div>
-
-              <form className="mx-auto mt-6 flex max-w-4xl flex-col gap-3 lg:flex-row lg:items-center" action="/notes" method="get">
+              <form className="flex w-full flex-col gap-3 md:max-w-xl" action="/notes" method="get">
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                   <input
                     name="q"
                     defaultValue={query}
                     placeholder="搜索标题、摘要、正文或标签..."
-                    className="w-full rounded-full border border-white/40 bg-white/75 py-3 pl-12 pr-4 text-slate-800 shadow-sm outline-none backdrop-blur-md placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800/55 dark:text-white"
+                    className="w-full rounded-full border border-white/35 bg-white/70 py-3 pl-12 pr-10 text-slate-800 shadow-sm outline-none placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800/55 dark:text-white"
                   />
                   {query ? (
                     <Link
@@ -113,58 +114,51 @@ export default async function NotesPage({
                     </Link>
                   ) : null}
                 </div>
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-500/25 transition-transform hover:-translate-y-0.5"
-                >
-                  <Search size={16} />
-                  搜索
-                </button>
               </form>
-
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                <Link
-                  href={buildHref(query, "")}
-                  className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-                    activeTag === "All"
-                      ? "bg-emerald-500 text-white shadow-md"
-                      : "bg-white/65 text-slate-600 hover:bg-white dark:bg-slate-800/65 dark:text-slate-300"
-                  }`}
-                >
-                  All
-                </Link>
-                {stats.tags.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={buildHref(query, item.name)}
-                    className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
-                      activeTag === item.name
-                        ? "bg-emerald-500 text-white shadow-md"
-                        : "bg-white/65 text-slate-600 hover:bg-white dark:bg-slate-800/65 dark:text-slate-300"
-                    }`}
-                  >
-                    {item.name} · {item.count}
-                  </Link>
-                ))}
-              </div>
             </div>
           </section>
+
+          <div className="mb-5 flex flex-wrap gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <Link
+              href={buildHref(query, "")}
+              className={`rounded-full px-4 py-2 transition-all ${
+                activeTag === "All"
+                  ? "bg-emerald-500 text-white shadow-md"
+                  : "bg-white/60 text-slate-600 hover:bg-white dark:bg-slate-800/60 dark:text-slate-300"
+              }`}
+            >
+              All
+            </Link>
+            {stats.tags.map((item) => (
+              <Link
+                key={item.name}
+                href={buildHref(query, item.name)}
+                className={`rounded-full px-4 py-2 transition-all ${
+                  activeTag === item.name
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "bg-white/60 text-slate-600 hover:bg-white dark:bg-slate-800/60 dark:text-slate-300"
+                }`}
+              >
+                {item.name} · {item.count}
+              </Link>
+            ))}
+          </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {items.map((item) => (
               <article
                 key={item.id}
-                className="group overflow-hidden rounded-[26px] border border-white/40 bg-white/65 shadow-xl backdrop-blur-xl transition-transform hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900/45"
+                className="group overflow-hidden rounded-[24px] border border-white/35 bg-white/60 shadow-lg transition-transform hover:-translate-y-1 dark:border-white/10 dark:bg-slate-900/42"
               >
-                <div className="relative aspect-[16/8] overflow-hidden">
+                <div className="relative aspect-[16/7] overflow-hidden">
                   <Image
                     src={pickNahidaCover(item.slug)}
                     alt="纳西妲封面"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover object-[center_18%] transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/45 via-emerald-950/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/40 via-emerald-950/10 to-transparent" />
                   <div className="absolute left-4 top-4 flex gap-2 text-[10px] font-bold uppercase tracking-wider">
                     <span className="rounded-md bg-white/75 px-2 py-1 text-emerald-800 backdrop-blur dark:bg-slate-950/45 dark:text-emerald-200">
                       {item.category}
@@ -177,7 +171,7 @@ export default async function NotesPage({
 
                 <div className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-4">
-                    <h2 className="text-xl font-black leading-tight text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
+                    <h2 className="text-[1.1rem] font-black leading-tight text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-300">
                       <Link href={buildNoteHref(item.slug)}>{highlight(item.title, query)}</Link>
                     </h2>
 
@@ -199,19 +193,16 @@ export default async function NotesPage({
                       <Link
                         key={tagName}
                         href={buildHref(query, tagName)}
-                        className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
+                        className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 transition-colors hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
                       >
                         {tagName}
                       </Link>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="truncate text-xs text-slate-400">{item.source_path}</div>
-                    <Link href={buildNoteHref(item.slug)} className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                      阅读全文
-                    </Link>
-                  </div>
+                  <Link href={buildNoteHref(item.slug)} className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    阅读全文
+                  </Link>
                 </div>
               </article>
             ))}

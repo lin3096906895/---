@@ -524,7 +524,7 @@ export default function DijiangModel({ posts = [], chatters = [], moments = [] }
   const currentMonthRecords = useMemo(() => {
     const formatted = [...posts, ...chatters, ...moments].map(r => ({
       id: r.id || r.slug, slug: r.slug, type: r.type, title: r.title, date: r.date,
-      image: r.cover || r.image || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop',
+      image: r.cover || r.image || siteConfig.photoWallImage,
       content: r.content
     })).filter(r => r.date.startsWith(currentMonthStr));
     return [...formatted, ...realWishes];

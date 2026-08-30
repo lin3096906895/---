@@ -25,7 +25,8 @@ export default function BackgroundSlider() {
           style={{
             backgroundImage: `url(${img})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center 18%',
+            filter: 'saturate(1.12) brightness(0.98) contrast(1.04)',
             // 当前显示的图片 opacity 为 1，其他的为 0
             opacity: i === index ? 1 : 0,
             // 解决层级重叠导致的渲染压力

@@ -7,6 +7,7 @@ export type Project = {
   tags: string[];
   platform?: "github" | "gitee";
   coverImage?: string;
+  coverPosition?: string;
 };
 
 export const projectsData: Project[] = [
@@ -20,6 +21,7 @@ export const projectsData: Project[] = [
     tags: ["Java", "Spring Boot", "Vue"],
     platform: "gitee",
     coverImage: "/nahida/bg-1.jpg",
+    coverPosition: "center 16%",
   },
   {
     id: "novel-platform",
@@ -29,6 +31,7 @@ export const projectsData: Project[] = [
     icon: "🚀",
     tags: ["React", "TypeScript", "Vite", "PostgreSQL", "NestJS"],
     platform: "gitee",
-    coverImage: "/nahida/bg-2.jpg",
+    coverImage: "/nahida/bg-3.jpg",
+    coverPosition: "center 30%",
   },
 ];
