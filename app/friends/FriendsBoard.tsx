@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import BackButton from '../../components/BackButton';
 import { friendsData } from '../../data/friends';
-import Comments from '../../components/Comments'; // 🌟 引入你的 Gitalk 组件
-import { siteConfig } from '../../siteConfig'; // 🌟 引入刚刚更新的全局配置文件
+import Comments from '../../components/Comments';
+import { siteConfig } from '../../siteConfig';
 
 // Framer Motion 动画变体：交错子元素
 const containerVariants = {
@@ -23,10 +23,8 @@ const itemVariants = {
 };
 
 export default function FriendsBoard() {
-  // 🌟 控制复制按钮的状态
   const [isCopied, setIsCopied] = useState(false);
 
-  // 🌟 直接从 siteConfig 读取申请格式
   const applyFormat = siteConfig.friendLinkApplyFormat;
 
   const handleCopy = () => {
@@ -38,17 +36,16 @@ export default function FriendsBoard() {
   return (
     <div className="w-full max-w-5xl mx-auto px-3 sm:px-10 py-6 md:py-10 relative z-10 scroll-smooth mt-20 md:mt-10">
 
-      {/* 顶部导航与标题 */}
       <div className="mb-8 md:mb-12 flex flex-col items-center md:items-start">
         <div className="w-full flex justify-start mb-4 md:mb-6">
           <BackButton />
         </div>
         <div className="text-center md:text-left w-full px-2 md:px-0">
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-widest drop-shadow-sm uppercase">
-            云端引力
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-tight drop-shadow-sm">
+            友链
           </h1>
           <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif">
-            那些散落在赛博宇宙各处的有趣灵魂与神经节点。
+            和我互相挂着的小站。
           </p>
         </div>
       </div>
@@ -67,7 +64,6 @@ export default function FriendsBoard() {
               rel="noopener noreferrer"
               className="block h-full rounded-2xl md:rounded-3xl bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-lg md:shadow-xl overflow-hidden transition-all duration-500 hover:-translate-y-1 md:hover:-translate-y-2 hover:scale-[1.02] group relative p-3 md:p-6"
             >
-              {/* 卡片底部的动态光晕 */}
               <div
                 className="absolute -bottom-10 -right-10 w-24 h-24 md:w-32 md:h-32 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                 style={{ backgroundColor: friend.themeColor }}
@@ -85,7 +81,7 @@ export default function FriendsBoard() {
                   </h2>
                   <div className="text-[9px] md:text-xs font-bold text-indigo-500/70 dark:text-indigo-400/70 tracking-widest uppercase mt-0.5 md:mt-1 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                    Online
+                    互链中
                   </div>
                 </div>
               </div>
@@ -98,7 +94,6 @@ export default function FriendsBoard() {
         ))}
       </motion.div>
 
-      {/* 申请友链引导区 */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -107,13 +102,12 @@ export default function FriendsBoard() {
         className="mt-14 md:mt-20 bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-2xl md:rounded-3xl p-5 md:p-8 max-w-3xl mx-auto text-center shadow-lg md:shadow-xl relative"
       >
         <h2 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-wider">
-          ✨ 建立神经连接
+          申请友链
         </h2>
         <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-serif mb-4 md:mb-6">
-          欢迎各位大佬交换友链！请一键复制下方格式，并在底部的 Gitalk 留言板申请：
+          按下方格式填写即可，我会按站点信息补进去。
         </p>
 
-        {/* 代码展示框 & 一键复制按钮 */}
         <div className="relative bg-slate-100/60 dark:bg-slate-900/60 rounded-xl md:rounded-2xl p-4 md:p-5 text-left inline-block w-full max-w-md border border-slate-200/50 dark:border-slate-700/50 group overflow-hidden">
           <pre className="font-mono text-[10px] md:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all pr-8 md:pr-10">
             {applyFormat}
@@ -146,7 +140,6 @@ export default function FriendsBoard() {
         </div>
       </motion.div>
 
-      {/* Gitalk 评论区 */}
       <motion.div
         id="gitalk-container"
         className="mt-12 md:mt-16 scroll-mt-24 px-2 md:px-0"
@@ -158,7 +151,7 @@ export default function FriendsBoard() {
         <div className="flex items-center justify-center gap-2 md:gap-3 mb-4 md:mb-6">
           <span className="w-8 md:w-12 h-[1px] bg-slate-300 dark:bg-slate-700"></span>
           <h3 className="text-sm md:text-xl font-bold text-slate-800 dark:text-gray-200 tracking-widest uppercase">
-            终端留言板
+            留言区
           </h3>
           <span className="w-8 md:w-12 h-[1px] bg-slate-300 dark:bg-slate-700"></span>
         </div>

@@ -91,6 +91,6 @@ export const siteConfig = {
     temperature: 0.85,
   },
   friendLinkApplyFormat:
-    "名称：Hpearcl的纳西妲花园\n简介：软件工程专业学生的个人博客\n链接：https://你的站点地址\n头像：/nahida/avatar.jpg",
+    "名称：Hpearcl的纳西妲花园\n简介：软件工程专业学生的个人博客\n链接：https://你的站点地址\n头像：/nahida/avatar.jpg\n可选站点名：你的站点名",
   enableLevelSystem: true,
 };
