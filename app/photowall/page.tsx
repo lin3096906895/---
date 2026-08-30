@@ -18,6 +18,7 @@ function loadPhotos() {
       url: `/photowall/nahida/${encodeURIComponent(name)}`,
       caption: `纳西妲照片 ${String(index + 1).padStart(2, "0")}`,
       name,
+      featured: index < 3,
     }));
 }
 
