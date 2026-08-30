@@ -1,6 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Search, ArrowRight, Sparkles, X } from "lucide-react";
+import { BookOpen, Search, ArrowRight, X } from "lucide-react";
 
 import Navbar from "../../components/Navbar";
 import PageTransition from "../../components/PageTransition";
@@ -84,10 +83,6 @@ export default async function NotesPage({
           <section className="mb-8 rounded-[24px] border border-white/30 bg-white/35 p-5 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/28">
             <div className="mx-auto flex max-w-4xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="text-center md:text-left">
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-700 dark:text-emerald-300">
-                  <Sparkles size={12} />
-                  Notes Archive
-                </div>
                 <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-white">笔记归档</h1>
                 <div className="mt-2 flex items-center justify-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 md:justify-start">
                   <BookOpen size={16} />
@@ -101,7 +96,7 @@ export default async function NotesPage({
                   <input
                     name="q"
                     defaultValue={query}
-                    placeholder="搜索标题、摘要、正文或标签..."
+                    placeholder="搜索标题、摘要、正文、标签..."
                     className="w-full rounded-full border border-white/35 bg-white/70 py-3 pl-12 pr-10 text-slate-800 shadow-sm outline-none placeholder:text-slate-400 dark:border-white/10 dark:bg-slate-800/55 dark:text-white"
                   />
                   {query ? (
@@ -127,7 +122,7 @@ export default async function NotesPage({
                   : "bg-white/60 text-slate-600 hover:bg-white dark:bg-slate-800/60 dark:text-slate-300"
               }`}
             >
-              All
+              全部
             </Link>
             {stats.tags.map((item) => (
               <Link

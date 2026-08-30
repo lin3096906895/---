@@ -268,10 +268,6 @@ export default async function NoteDetail({
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-400">分类</div>
                     <div className="mt-1">{note.category}</div>
                   </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-slate-400">来源路径</div>
-                    <div className="mt-1 break-all text-xs">{note.source_path}</div>
-                  </div>
                 </div>
               </div>
             </div>
