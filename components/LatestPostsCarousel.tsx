@@ -22,7 +22,7 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
   const currentPost = posts[currentIndex];
 
   return (
-    <div className="md:col-span-4 rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl overflow-hidden relative group min-h-[420px] h-full flex flex-col">
+    <div className="md:col-span-4 rounded-3xl bg-white/45 dark:bg-slate-800/45 backdrop-blur-md border border-white/35 dark:border-white/10 shadow-xl overflow-hidden relative group min-h-[420px] h-full flex flex-col">
 
       {/* 整个卡片的点击跳转区域 */}
       <Link href={currentPost.slug === 'none' ? '#' : `/posts/${currentPost.slug}`} className="absolute inset-0 z-20" aria-label={`阅读 ${currentPost.title}`} />
@@ -38,16 +38,16 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
           className="absolute inset-0 z-0"
         >
           <img src={currentPost.cover} className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" alt={currentPost.title} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/35 to-transparent"></div>
         </motion.div>
       </AnimatePresence>
 
       {/* 文本内容区 */}
       <div className="relative z-10 flex flex-col justify-end p-6 w-full mt-auto h-full pointer-events-none">
         <div className="flex items-center gap-2 mb-3">
-          <span className="px-3 py-1 bg-indigo-500/80 backdrop-blur-lg rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-lg">Latest Insight</span>
+          <span className="px-3 py-1 bg-emerald-500/80 backdrop-blur-lg rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-lg">Latest Insight</span>
           {currentPost.formattedDate && (
-            <span className="px-2 py-1 bg-black/40 backdrop-blur-md border border-white/20 rounded-full text-[10px] text-white/90 font-mono tracking-wider">
+            <span className="px-2 py-1 bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-[10px] text-white/90 font-mono tracking-wider">
               <i className="ri-time-line mr-1"></i>{currentPost.formattedDate}
             </span>
           )}
@@ -66,7 +66,7 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
                 e.stopPropagation(); // 阻止触发父级的外层跳转
                 setCurrentIndex(i);
               }}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-6 bg-indigo-400' : 'w-2 bg-white/40 hover:bg-white/80'}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-6 bg-emerald-400' : 'w-2 bg-white/40 hover:bg-white/80'}`}
               aria-label={`切换到第 ${i + 1} 篇文章`}
             />
           ))}

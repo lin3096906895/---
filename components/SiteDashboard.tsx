@@ -31,8 +31,8 @@ export default function SiteDashboard() {
   }, [START_DATE]);
 
   return (
-    <div className="md:col-span-12 rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl overflow-hidden flex flex-col md:flex-row items-stretch transition-colors duration-700 h-auto md:h-20 group">
-      <div className="bg-slate-900 dark:bg-black text-white px-8 py-4 md:py-0 flex items-center justify-center font-mono text-2xl md:text-3xl font-black tracking-widest shadow-inner relative overflow-hidden group-hover:text-indigo-400 transition-colors">
+    <div className="md:col-span-12 rounded-3xl bg-white/45 dark:bg-slate-800/45 backdrop-blur-md border border-white/35 dark:border-white/10 shadow-xl overflow-hidden flex flex-col md:flex-row items-stretch transition-colors duration-700 h-auto md:h-20 group">
+      <div className="bg-emerald-950/95 dark:bg-emerald-950 text-white px-8 py-4 md:py-0 flex items-center justify-center font-mono text-2xl md:text-3xl font-black tracking-widest shadow-inner relative overflow-hidden group-hover:text-emerald-200 transition-colors">
         <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
         {timeStr || '00:00:00'}
         <div className="absolute left-0 right-0 top-1/2 h-px bg-black/50" />
