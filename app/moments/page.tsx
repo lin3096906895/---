@@ -15,7 +15,6 @@ export default function MomentsPage() {
   let allMoments: any[] = [];
 
   try {
-    // 🌟 终极防漏绝招：同时扫描两个可能的文件夹，把所有的说说都抓出来！
     const possibleDirs = [
       path.join(process.cwd(), 'posts', 'moments'),
       path.join(process.cwd(), 'moments')
@@ -39,7 +38,6 @@ export default function MomentsPage() {
       }
     });
 
-    // 去重，防止你在两个文件夹放了同名文件
     allMoments = Array.from(new Map(allMoments.map(item => [item.id, item])).values());
 
   } catch (e) {

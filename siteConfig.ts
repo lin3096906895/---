@@ -37,8 +37,8 @@ export const siteConfig = {
   counts: {
     photos: 128,
   },
-  chatterTitle: "森林碎语",
-  chatterDescription: "代码、学习、日常和一点点草木气息的记录",
+  chatterTitle: "杂谈文章墙",
+  chatterDescription: "随手记下的灵感、碎片与闲谈",
   danmakuList: [
     "在干嘛呢？",
     "今天也要好好写代码",

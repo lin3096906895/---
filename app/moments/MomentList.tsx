@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { MapPin, MessageSquare, Clock, Sparkles, Search, ArrowDownAZ, ArrowUpZA, ChevronLeft, ChevronRight, Ghost } from 'lucide-react';
+import { MapPin, MessageSquare, Clock, Sparkles, Search, ArrowDownAZ, ArrowUpZA, Ghost } from 'lucide-react';
 import MomentComments from '../../components/MomentComments';
 
 function timeAgo(dateStr: string) {
@@ -98,7 +98,7 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.4, type: 'spring', stiffness: 100 }}
-      className="flex flex-col bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl md:rounded-[40px] shadow-lg md:shadow-xl border border-white/40 dark:border-white/10 p-5 md:p-10 transition-shadow hover:shadow-2xl overflow-hidden relative group w-full"
+      className="flex flex-col bg-white/55 dark:bg-slate-800/42 backdrop-blur-xl rounded-3xl md:rounded-[32px] shadow-lg border border-white/35 dark:border-white/10 p-5 md:p-8 transition-shadow hover:shadow-2xl overflow-hidden relative group w-full"
     >
       <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-8 pb-4 md:pb-6 border-b border-slate-200/50 dark:border-slate-700/50 relative">
         <div className="w-10 h-10 md:w-14 md:h-14 shrink-0 rounded-xl md:rounded-2xl overflow-hidden shadow-sm md:shadow-md border-2 border-white dark:border-slate-700">
@@ -143,19 +143,19 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
   );
 
   return (
-    <div className="w-[95%] md:w-[90%] max-w-6xl mx-auto py-6 md:py-10 mt-24 md:mt-28 relative z-10 flex-1 flex flex-col min-h-[85vh]">
+    <div className="w-[95%] md:w-[88%] max-w-5xl mx-auto py-6 md:py-10 mt-24 md:mt-28 relative z-10 flex-1 flex flex-col min-h-[85vh]">
 
       <div className="mb-8 md:mb-14 text-center relative">
-        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-tighter">生活动态</motion.h1>
+        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-2 md:mb-4 tracking-tighter">说说</motion.h1>
         <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium italic opacity-80 flex items-center justify-center gap-1.5 md:gap-2">
-          <Sparkles size={12} className="md:w-3.5 md:h-3.5 text-indigo-500" /> “ 在代码之外捕捉瞬间的温度 ”
+          <Sparkles size={12} className="md:w-3.5 md:h-3.5 text-indigo-500" /> “ 记录一点正在发生的日常 ”
         </p>
       </div>
 
       <div className="mb-10 md:mb-16 flex flex-col items-center gap-5 md:gap-8">
         <div className="relative w-full max-w-lg group px-2 md:px-0">
           <Search className="w-5 h-5 md:w-6 md:h-6 absolute left-6 md:left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors z-20 pointer-events-none" />
-          <input type="text" placeholder="搜寻被遗忘的记忆..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/5 rounded-xl md:rounded-2xl px-5 md:px-6 py-3 md:py-4 pl-12 md:pl-14 text-sm md:text-base text-slate-800 dark:text-white shadow-lg md:shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium relative z-10" />
+          <input type="text" placeholder="搜索说说..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-xl border border-white/40 dark:border-white/5 rounded-xl md:rounded-2xl px-5 md:px-6 py-3 md:py-4 pl-12 md:pl-14 text-sm md:text-base text-slate-800 dark:text-white shadow-lg md:shadow-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium relative z-10" />
         </div>
 
         <div className="flex bg-white/50 dark:bg-slate-800/50 p-1 md:p-1.5 rounded-xl md:rounded-2xl border border-white/50 dark:border-white/10 shadow-sm relative z-10">
@@ -170,15 +170,26 @@ export default function MomentList({ moments, authorName, avatarUrl }: any) {
 
       <LayoutGroup>
         {processedMoments.length > 0 ? (
-          <div className="flex flex-col md:flex-row gap-5 md:gap-8 pb-32 w-full items-start">
-            <div className="flex-1 flex flex-col gap-5 md:gap-8 w-full min-w-0">
+          <div className="relative w-full pb-32">
+            <div className="absolute left-[18px] top-0 bottom-0 w-px bg-gradient-to-b from-emerald-300 via-emerald-400/50 to-transparent md:left-1/2 md:-translate-x-1/2" />
+            <div className="flex flex-col gap-5 md:gap-7 w-full min-w-0">
               <AnimatePresence mode='popLayout'>
-                {processedMoments.filter((_, i) => i % 2 === 0).map(moment => renderMomentCard(moment))}
-              </AnimatePresence>
-            </div>
-            <div className="flex-1 flex flex-col gap-5 md:gap-8 w-full min-w-0">
-              <AnimatePresence mode='popLayout'>
-                {processedMoments.filter((_, i) => i % 2 === 1).map(moment => renderMomentCard(moment))}
+                {processedMoments.map((moment, index) => (
+                  <motion.div
+                    key={moment.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.4, type: 'spring', stiffness: 100 }}
+                    className={`relative flex w-full ${index % 2 === 0 ? 'md:justify-start' : 'md:justify-end'}`}
+                  >
+                    <div className="absolute left-[10px] top-8 z-10 h-3 w-3 rounded-full border-2 border-emerald-400 bg-white shadow-[0_0_0_6px_rgba(16,185,129,0.08)] md:left-1/2 md:-translate-x-1/2" />
+                    <div className={`w-[calc(100%-2rem)] pl-9 md:pl-0 md:w-[calc(50%-1.25rem)] ${index % 2 === 0 ? 'md:pr-8' : 'md:pl-8'}`}>
+                      {renderMomentCard(moment)}
+                    </div>
+                  </motion.div>
+                ))}
               </AnimatePresence>
             </div>
           </div>
