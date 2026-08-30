@@ -23,6 +23,8 @@
 # local runtime logs
 notes-dev.log
 notes-dev.err
+dev-server.log
+dev-server.err
 
 # misc
 .DS_Store
