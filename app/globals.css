@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+.background-slider-layer {
+  /* 手机上按高度显示，保留人物主体并减少放大裁切。 */
+  background-size: auto 110%;
+  background-position: center 10%;
+  background-repeat: no-repeat;
+}
+
+@media (min-width: 768px) {
+  .background-slider-layer {
+    /* 桌面端全屏铺满，避免背景两侧出现空隙。 */
+    background-size: cover;
+    background-position: center 10%;
+  }
+}
+
 /* 1. 声明暗黑模式变体 */
 @custom-variant dark (&:where(.dark, .dark *));
 

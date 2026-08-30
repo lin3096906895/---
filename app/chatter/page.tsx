@@ -12,6 +12,8 @@ export const metadata = {
   description: "杂谈文章墙",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ChatterPage() {
   const chattersDirectory = path.join(process.cwd(), 'chatters');
   let chatters = [];
@@ -21,10 +23,10 @@ export default function ChatterPage() {
       fs.mkdirSync(chattersDirectory);
     }
 
-    const fileNames = fs.readdirSync(chattersDirectory).filter(fileName => fileName.endsWith('.md'));
+    const fileNames = fs.readdirSync(chattersDirectory).filter(fileName => /\.(md|markdown)$/i.test(fileName));
 
     chatters = fileNames.map(fileName => {
-      const slug = fileName.replace(/\.md$/, '');
+      const slug = fileName.replace(/\.(md|markdown)$/i, '');
       const fileContents = fs.readFileSync(path.join(chattersDirectory, fileName), 'utf8');
       const { data, content } = matter(fileContents);
 

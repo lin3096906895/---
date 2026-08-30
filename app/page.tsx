@@ -12,12 +12,15 @@ import ThemeToggleBlock from '../components/ThemeToggleBlock';
 import ProfileCard from '../components/ProfileCard';
 import SiteDashboard from '../components/SiteDashboard';
 import { albums } from '../data/albums';
+import { loadNahidaPhotos } from '../lib/nahida-photos';
 import LyricBar from '../components/LyricBar';
 import { ToastProvider } from '../components/ToastProvider';
 
 import LatestPostsCarousel from '../components/LatestPostsCarousel';
 import LatestChatterCarousel from '../components/LatestChatterCarousel';
 import DanmakuBackground from '../components/DanmakuBackground';
+
+export const dynamic = 'force-dynamic';
 
 function formatUpdateTime(dateString: string) {
   if (!dateString || dateString === '1970-01-01') return '刚刚更新';
@@ -34,46 +37,64 @@ function formatUpdateTime(dateString: string) {
   } catch { return dateString; }
 }
 
+function loadHomeEntries(directory: string, source: 'post' | 'archive') {
+  if (!fs.existsSync(directory)) return [];
+
+  return fs.readdirSync(directory)
+    .filter(fileName => /\.(md|markdown)$/i.test(fileName))
+    .map(fileName => {
+      const fullPath = path.join(directory, fileName);
+      const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
+      const rawDate = data.date || '1970-01-01';
+
+      return {
+        slug: fileName.replace(/\.(md|markdown)$/i, ''),
+        ...data,
+        title: data.title || '',
+        description: data.description || content.substring(0, 120),
+        content: content || '',
+        cover: data.cover || siteConfig.defaultPostCover,
+        date: rawDate,
+        formattedDate: formatUpdateTime(rawDate),
+        source,
+      };
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return b.slug.localeCompare(a.slug);
+    });
+}
+
 export default function Home() {
   const postsDirectory = path.join(process.cwd(), 'posts');
   let allPosts: any[] = [];
   try {
-    if (fs.existsSync(postsDirectory)) {
-      const fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
-      allPosts = fileNames.map(fileName => {
-        const fullPath = path.join(postsDirectory, fileName);
-        const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
-        const rawDate = data.date || '1970-01-01';
-        return {
-          slug: fileName.replace(/\.md$/, ''),
-          ...data,
-          title: data.title || '',
-          description: data.description || '',
-          content: content || '',
-          date: rawDate,
-          formattedDate: formatUpdateTime(rawDate)
-        };
-      }).sort((a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        if (dateB !== dateA) return dateB - dateA;
-        return b.slug.localeCompare(a.slug);
-      });
-    }
+    allPosts = loadHomeEntries(postsDirectory, 'post');
   } catch (e) {}
-  const top5Posts = allPosts.length > 0 ? allPosts.slice(0, 5) : [{ slug: 'none', title: '暂无文章', description: '快去写第一篇吧！', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
+
+  let archivePosts: any[] = [];
+  try {
+    const archiveDirectory = path.resolve(process.cwd(), '..', '..', '归档');
+    archivePosts = loadHomeEntries(archiveDirectory, 'archive');
+  } catch (e) {}
+
+  // 正式文章优先；正式文章为空时用归档内容填充首页卡片，避免首页出现空状态。
+  const homeEntries = allPosts.length > 0 ? allPosts : archivePosts;
+  const top5Posts = homeEntries.length > 0 ? homeEntries.slice(0, 5) : [{ slug: 'none', source: 'empty', title: '暂无文章', description: '快去写第一篇吧！', cover: siteConfig.defaultPostCover, date: '', formattedDate: '' }];
 
   const chattersDirectory = path.join(process.cwd(), 'chatters');
   let allChatters: any[] = [];
   try {
     if (fs.existsSync(chattersDirectory)) {
-      const chatterFiles = fs.readdirSync(chattersDirectory).filter(f => f.endsWith('.md'));
+      const chatterFiles = fs.readdirSync(chattersDirectory).filter(f => /\.(md|markdown)$/i.test(f));
       allChatters = chatterFiles.map(fileName => {
         const fullPath = path.join(chattersDirectory, fileName);
         const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
         const rawDate = data.date || '1970-01-01';
         const cover = data.cover || siteConfig.photoWallImage;
-        return { slug: fileName.replace(/\.md$/, ''), title: data.title || '碎片记录', description: data.description || content.substring(0, 60), cover: cover, date: rawDate, formattedDate: formatUpdateTime(rawDate) };
+        return { slug: fileName.replace(/\.(md|markdown)$/i, ''), title: data.title || '碎片记录', description: data.description || content.substring(0, 60), cover: cover, date: rawDate, formattedDate: formatUpdateTime(rawDate) };
       }).sort((a, b) => {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
@@ -85,8 +106,11 @@ export default function Home() {
   const top5Chatters = allChatters.length > 0 ? allChatters.slice(0, 5) : [{ slug: 'none', title: '暂无记录', description: '记录一段思绪...', cover: siteConfig.photoWallImage, date: '', formattedDate: '' }];
 
   const chatterCount = allChatters.length;
-  const realPhotoCount = albums.reduce((total, album) => total + album.photos.length, 0);
-  const latestAlbum = albums.length > 0 ? albums[0] : { id: '', title: '照片墙', description: '查看摄影', cover: siteConfig.photoWallImage, date: '' };
+  const nahidaPhotos = loadNahidaPhotos();
+  const realPhotoCount = nahidaPhotos.length;
+  const latestAlbum = albums.length > 0
+    ? { ...albums[0], cover: nahidaPhotos[0]?.url || albums[0].cover }
+    : { id: '', title: '照片墙', description: '查看摄影', cover: siteConfig.photoWallImage, date: '' };
 
   return (
     <ToastProvider>

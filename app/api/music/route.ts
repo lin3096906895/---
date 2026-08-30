@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { siteConfig } from "@/siteConfig";
+import { hasLocalMusicManifest, loadLocalMusic } from "@/lib/local-music";
 
 type SongResult = {
   id: string;
@@ -11,8 +12,12 @@ type SongResult = {
   url?: string;
   src?: string;
   lrc?: string;
+  searchQuery?: string;
   error?: string;
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function fetchLyrics(trackName: string, artistName: string) {
   const query = new URLSearchParams({ track_name: trackName, artist_name: artistName });
@@ -26,7 +31,7 @@ async function fetchLyrics(trackName: string, artistName: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const localPlaylist = (siteConfig.musicPlaylist || []).map((song) => ({
+  const configuredPlaylist = (siteConfig.musicPlaylist || []).map((song) => ({
     id: song.id,
     name: song.name,
     artist: song.artist,
@@ -36,14 +41,28 @@ export async function GET(request: NextRequest) {
     url: song.url,
     src: song.url,
     lrc: song.lrc || "",
+    searchQuery: song.searchQuery,
   }));
+  const syncedPlaylist = loadLocalMusic().map((song) => ({
+    id: song.id,
+    name: song.name,
+    artist: song.artist,
+    author: song.artist,
+    cover: song.cover,
+    pic: song.cover,
+    url: song.url,
+    src: song.url,
+    lrc: song.lrc,
+    searchQuery: song.searchQuery,
+  }));
+  const localPlaylist = hasLocalMusicManifest() ? syncedPlaylist : configuredPlaylist;
 
   if (siteConfig.musicSource === "local" || localPlaylist.length > 0) {
     const withLyrics: SongResult[] = await Promise.all(
       localPlaylist.map(async (song) => {
         if (song.lrc) return song;
         const fallbackQuery =
-          siteConfig.musicPlaylist.find((item) => item.id === song.id)?.searchQuery ||
+          localPlaylist.find((item) => item.id === song.id)?.searchQuery ||
           `${song.name || ""} ${song.artist || ""}`;
         try {
           const lrc = await fetchLyrics(song.name || fallbackQuery, song.artist || "");
@@ -53,7 +72,9 @@ export async function GET(request: NextRequest) {
         }
       }),
     );
-    return NextResponse.json(withLyrics);
+    return NextResponse.json(withLyrics, {
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 
   const ids = request.nextUrl.searchParams.get("ids");

@@ -16,6 +16,15 @@ type MusicTrack = {
   lyrics?: LyricLine[];
 };
 
+type LocalManifestTrack = {
+  id?: unknown;
+  name?: unknown;
+  artist?: unknown;
+  cover?: unknown;
+  url?: unknown;
+  lrcUrl?: unknown;
+};
+
 interface MusicContextType {
   playlist: MusicTrack[];
   currentIndex: number;
@@ -95,6 +104,38 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const loadManifestFallback = async () => {
+    const response = await fetch("/music/manifest.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("Local music manifest unavailable");
+    const payload: unknown = await response.json();
+    const entries = Array.isArray(payload) ? payload : payload && typeof payload === "object" ? [payload] : [];
+    const tracks = entries
+      .filter((song): song is LocalManifestTrack => Boolean(song && typeof song === "object"))
+      .map((song, index) => ({
+        id: typeof song.id === "string" && song.id ? song.id : `local-track-${index + 1}`,
+        title: typeof song.name === "string" && song.name ? song.name : `本地音轨 ${index + 1}`,
+        artist: typeof song.artist === "string" && song.artist ? song.artist : "未知歌手",
+        cover: typeof song.cover === "string" && song.cover ? song.cover : siteConfig.photoWallImage,
+        src: typeof song.url === "string" ? song.url : "",
+        lrc: "",
+        lyrics: [],
+        lrcUrl: typeof song.lrcUrl === "string" ? song.lrcUrl : "",
+      }))
+      .filter((song) => song.src);
+
+    return Promise.all(
+      tracks.map(async (track) => {
+        if (!track.lrcUrl) return track;
+        try {
+          const lyricResponse = await fetch(track.lrcUrl, { cache: "no-store" });
+          return lyricResponse.ok ? { ...track, lrc: await lyricResponse.text() } : track;
+        } catch {
+          return track;
+        }
+      }),
+    );
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -117,14 +158,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           }));
 
         if (!isMounted) return;
-        const finalPlaylist = mergedPlaylist.length > 0 ? mergedPlaylist : localPlaylist;
+        const finalPlaylist = Array.isArray(rawResults) ? mergedPlaylist : localPlaylist;
         setPlaylist(finalPlaylist);
         setCurrentLyric(finalPlaylist.length > 0 ? "本地歌单已就绪" : "暂无可播放歌曲");
         setIsLoading(false);
       } catch {
         if (!isMounted) return;
-        setPlaylist(localPlaylist);
-        setCurrentLyric(localPlaylist.length > 0 ? "已切换到本地歌单" : "网络初始化失败");
+        try {
+          const manifestPlaylist = await loadManifestFallback();
+          if (!isMounted) return;
+          setPlaylist(manifestPlaylist);
+          setCurrentLyric(manifestPlaylist.length > 0 ? "已切换到本地歌单" : "暂无可播放歌曲");
+        } catch {
+          if (!isMounted) return;
+          setPlaylist(localPlaylist);
+          setCurrentLyric(localPlaylist.length > 0 ? "已切换到本地歌单" : "网络初始化失败");
+        }
         setIsLoading(false);
       }
     };

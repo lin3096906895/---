@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -24,17 +25,76 @@ import BackButton from '../../../components/BackButton';
 import Comments from '../../../components/Comments';
 import SidebarLyric from '../../../components/SidebarLyric';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+function postDirectories() {
+  return [
+    path.join(process.cwd(), 'posts'),
+    path.resolve(process.cwd(), '..', '..', '归档'),
+  ];
+}
+
+function decodeSlug(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function normalizeDate(value: unknown) {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return '1970-01-01';
+    return value.toISOString().replace('T', ' ').slice(0, 19);
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return '1970-01-01';
+    return trimmed.includes('T') ? trimmed.replace('T', ' ').slice(0, 19) : trimmed;
+  }
+
+  return '1970-01-01';
+}
+
+function findPostFile(slug: string) {
+  const decodedSlug = decodeSlug(slug);
+
+  // 只允许读取文章文件名，避免 URL 参数跳出文章目录。
+  if (!decodedSlug || decodedSlug.includes('/') || decodedSlug.includes('\\')) return null;
+
+  for (const directory of postDirectories()) {
+    const fullPath = path.join(directory, `${decodedSlug}.md`);
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+      return { slug: decodedSlug, fullPath };
+    }
+  }
+
+  return null;
+}
+
+function listPostFiles() {
+  const files: Array<{ slug: string; fullPath: string }> = [];
+  const seen = new Set<string>();
+
+  for (const directory of postDirectories()) {
+    if (!fs.existsSync(directory)) continue;
+
+    for (const name of fs.readdirSync(directory)) {
+      if (!name.endsWith('.md')) continue;
+      const slug = name.replace(/\.md$/, '');
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      files.push({ slug, fullPath: path.join(directory, name) });
+    }
+  }
+
+  return files;
+}
+
 export async function generateStaticParams() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  if (!fs.existsSync(postsDirectory)) return [];
-
-  const filenames = fs.readdirSync(postsDirectory);
-
-  return filenames
-    .filter((name) => name.endsWith('.md'))
-    .map((name) => ({
-      slug: name.replace(/\.md$/, ''),
-    }));
+  return listPostFiles().map(({ slug }) => ({ slug }));
 }
 
 function extractToc(content: string) {
@@ -52,8 +112,10 @@ function extractToc(content: string) {
 }
 
 async function getPostData(slug: string) {
-  const fullPath = path.join(process.cwd(), 'posts', `${slug}.md`);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const postFile = findPostFile(slug);
+  if (!postFile) notFound();
+
+  const fileContents = fs.readFileSync(postFile.fullPath, 'utf8');
   let { data, content } = matter(fileContents);
 
   // ==========================================
@@ -101,27 +163,23 @@ async function getPostData(slug: string) {
     .process(content);
 
   return {
-    slug,
+    slug: postFile.slug,
     contentHtml: processedContent.toString(),
     toc: extractToc(content),
     title: data.title,
-    date: data.date,
+    date: normalizeDate(data.date),
     tags: data.tags && Array.isArray(data.tags) ? data.tags : [],
     cover: data.cover || siteConfig.defaultPostCover
   };
 }
 
 function getRecentPosts(currentSlug: string) {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  let fileNames: string[] = [];
-  try { fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md')); } catch(e) {}
-  if (!fileNames) return [];
-  return fileNames.map(f => {
-    const s = f.replace(/\.md$/, '');
-    const c = fs.readFileSync(path.join(postsDirectory, f), 'utf8');
+  const normalizedCurrentSlug = decodeSlug(currentSlug);
+  return listPostFiles().map(({ slug, fullPath }) => {
+    const c = fs.readFileSync(fullPath, 'utf8');
     const { data } = matter(c);
-    return { slug: s, title: data.title || '无标题', date: data.date };
-  }).filter(p => p.slug !== currentSlug).slice(0, 3);
+    return { slug, title: data.title || '无标题', date: normalizeDate(data.date) };
+  }).filter(p => p.slug !== normalizedCurrentSlug).slice(0, 3);
 }
 
 export default async function Post({ params }: { params: Promise<{ slug: string }> }) {

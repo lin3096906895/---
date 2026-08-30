@@ -77,7 +77,8 @@ export async function listNotesArchive(params: {
   const sql = `
     SELECT id, slug, title, excerpt, tags, source_path, category, published_at
     FROM notes_archive
-    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+    WHERE collection = 'notes'
+    ${where.length ? `AND ${where.join(" AND ")}` : ""}
     ORDER BY published_at DESC, id DESC
     LIMIT $${values.length - 1}
     OFFSET $${values.length}
@@ -92,7 +93,7 @@ export async function getNoteArchiveBySlug(slug: string) {
     `
     SELECT id, slug, title, excerpt, content, tags, source_path, category, published_at, created_at, updated_at
     FROM notes_archive
-    WHERE slug = $1
+    WHERE collection = 'notes' AND slug = $1
     LIMIT 1
     `,
     [slug]
@@ -103,11 +104,12 @@ export async function getNoteArchiveBySlug(slug: string) {
 
 export async function getNotesArchiveStats() {
   const [totalResult, tagResult] = await Promise.all([
-    notesDbPool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM notes_archive"),
+    notesDbPool.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM notes_archive WHERE collection = 'notes'"),
     notesDbPool.query<{ name: string; count: string }>(
       `
       SELECT unnest(tags) AS name, COUNT(*)::text AS count
       FROM notes_archive
+      WHERE collection = 'notes'
       GROUP BY name
       ORDER BY COUNT(*) DESC, name ASC
       `

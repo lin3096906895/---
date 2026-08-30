@@ -45,7 +45,9 @@ export default function LatestPostsCarousel({ posts }: { posts: any[] }) {
       {/* 文本内容区 */}
       <div className="relative z-10 flex flex-col justify-end p-6 w-full mt-auto h-full pointer-events-none">
         <div className="flex items-center gap-2 mb-3">
-          <span className="px-3 py-1 bg-emerald-500/80 backdrop-blur-lg rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-lg">Latest Insight</span>
+          <span className="px-3 py-1 bg-emerald-500/80 backdrop-blur-lg rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-lg">
+            {currentPost.source === 'archive' ? 'Latest Archive' : 'Latest Insight'}
+          </span>
           {currentPost.formattedDate && (
             <span className="px-2 py-1 bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-[10px] text-white/90 font-mono tracking-wider">
               <i className="ri-time-line mr-1"></i>{currentPost.formattedDate}

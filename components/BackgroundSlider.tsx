@@ -4,7 +4,36 @@ import { siteConfig } from '../siteConfig';
 
 export default function BackgroundSlider() {
   const [index, setIndex] = useState(0);
-  const images = siteConfig.bgImages;
+  const [images, setImages] = useState(siteConfig.bgImages);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/nahida/manifest.json", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: unknown) => {
+        const candidates = Array.isArray(payload)
+          ? payload
+          : payload && typeof payload === "object" && "images" in payload && Array.isArray(payload.images)
+            ? payload.images
+            : [];
+        const syncedImages = candidates.filter(
+          (image): image is string => typeof image === "string" && image.length > 0
+        );
+
+        if (!cancelled && syncedImages.length > 0) {
+          setImages(syncedImages);
+          setIndex(0);
+        }
+      })
+      .catch(() => {
+        // Keep the fixed theme images when the optional manifest is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -21,12 +50,10 @@ export default function BackgroundSlider() {
       {images.map((img, i) => (
         <div
           key={img}
-          className="absolute inset-0 transition-opacity duration-[2000ms] ease-in-out transform-gpu"
+          className="background-slider-layer absolute inset-0 transition-opacity duration-[2000ms] ease-in-out transform-gpu"
           style={{
             backgroundImage: `url(${img})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 18%',
-            filter: 'saturate(1.12) brightness(0.98) contrast(1.04)',
+            filter: 'saturate(1.08) brightness(1) contrast(1.08)',
             // 当前显示的图片 opacity 为 1，其他的为 0
             opacity: i === index ? 1 : 0,
             // 解决层级重叠导致的渲染压力

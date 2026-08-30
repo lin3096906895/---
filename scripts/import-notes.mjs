@@ -14,6 +14,7 @@ const connectionString = process.env.NOTES_DATABASE_URL || process.env.DATABASE_
 const publicAssetsRoot = path.join(projectRoot, "public", "notes-assets");
 const watchMode = process.argv.includes("--watch");
 const pruneMode = process.argv.includes("--prune");
+const collection = process.argv.includes("--archive") ? "archive" : "notes";
 
 if (!connectionString) {
   console.error("Missing NOTES_DATABASE_URL or DATABASE_URL");
@@ -97,6 +98,61 @@ function rewriteAssetLinks(content, slug) {
   });
 }
 
+function isPathInside(rootPath, candidatePath) {
+  const relative = path.relative(path.resolve(rootPath), path.resolve(candidatePath));
+  return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+async function ensureSchema(client) {
+  await client.query(`
+    ALTER TABLE notes_archive
+    ADD COLUMN IF NOT EXISTS collection TEXT NOT NULL DEFAULT 'notes'
+  `);
+
+  // 兼容之前已经导入过的归档文章，避免迁移后被当成普通笔记。
+  const archiveDirectory = collection === "archive"
+    ? notesRoot
+    : path.resolve("F:\\个人博客2\\归档");
+  const existingArchiveCandidates = await client.query(
+    "SELECT id, source_path FROM notes_archive WHERE collection = 'notes'"
+  );
+  for (const row of existingArchiveCandidates.rows) {
+    if (!isPathInside(archiveDirectory, row.source_path)) continue;
+    await client.query("UPDATE notes_archive SET collection = 'archive' WHERE id = $1", [row.id]);
+  }
+
+  await client.query(`
+    ALTER TABLE notes_archive
+    DROP CONSTRAINT IF EXISTS notes_archive_slug_key
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS notes_archive_collection_slug_key
+    ON notes_archive (collection, slug)
+  `);
+}
+
+async function pruneMissing(client, seenSlugs) {
+  const { rows } = await client.query(
+    "SELECT slug FROM notes_archive WHERE collection = $1",
+    [collection]
+  );
+
+  for (const row of rows) {
+    if (seenSlugs.has(row.slug)) continue;
+    await client.query(
+      "DELETE FROM notes_archive WHERE collection = $1 AND slug = $2",
+      [collection, row.slug]
+    );
+    const assetDir = path.join(
+      publicAssetsRoot,
+      collection === "archive" ? collection : "",
+      slugToFsPath(row.slug)
+    );
+    fs.rmSync(assetDir, { recursive: true, force: true });
+  }
+}
+
 async function importNotesOnce() {
   const files = [];
   const stack = [notesRoot];
@@ -116,7 +172,7 @@ async function importNotesOnce() {
     }
   }
 
-  if (files.length === 0) {
+  if (files.length === 0 && !pruneMode) {
     console.log(`No markdown files found under ${notesRoot}`);
     return;
   }
@@ -124,6 +180,16 @@ async function importNotesOnce() {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await ensureSchema(client);
+
+    if (files.length === 0) {
+      await pruneMissing(client, seenSlugs);
+      await client.query("COMMIT");
+      console.log(`No markdown files found under ${notesRoot}`);
+      console.log("Prune mode: removed files missing from the local folder.");
+      return;
+    }
+
     for (const filePath of files) {
       const raw = readFileWithFallback(filePath);
       const parsed = matter(raw);
@@ -140,16 +206,19 @@ async function importNotesOnce() {
         "未分类";
       const publishedAt = parsed.data.date || fs.statSync(filePath).mtime.toISOString();
       const slug = buildSlug(path.relative(notesRoot, filePath));
+      const assetSlug = collection === "archive" ? `${collection}/${slug}` : slug;
       seenSlugs.add(slug);
-      const assetCopied = copyNoteAssets(filePath, slug);
-      const content = assetCopied ? rewriteAssetLinks(parsed.content || raw, slug) : (parsed.content || raw);
+      const assetCopied = copyNoteAssets(filePath, assetSlug);
+      const content = assetCopied
+        ? rewriteAssetLinks(parsed.content || raw, assetSlug)
+        : (parsed.content || raw);
       const excerpt = parsed.data.description || getExcerpt(content);
 
       await client.query(
         `
-        INSERT INTO notes_archive (slug, title, excerpt, content, tags, source_path, category, published_at, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-        ON CONFLICT (slug) DO UPDATE SET
+        INSERT INTO notes_archive (collection, slug, title, excerpt, content, tags, source_path, category, published_at, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        ON CONFLICT (collection, slug) DO UPDATE SET
           title = EXCLUDED.title,
           excerpt = EXCLUDED.excerpt,
           content = EXCLUDED.content,
@@ -159,24 +228,18 @@ async function importNotesOnce() {
           published_at = EXCLUDED.published_at,
           updated_at = NOW()
         `,
-        [slug, title, excerpt, content, tags, filePath, category, publishedAt]
+        [collection, slug, title, excerpt, content, tags, filePath, category, publishedAt]
       );
     }
 
     if (pruneMode) {
-      const { rows } = await client.query("SELECT slug FROM notes_archive");
-      for (const row of rows) {
-        if (seenSlugs.has(row.slug)) continue;
-        await client.query("DELETE FROM notes_archive WHERE slug = $1", [row.slug]);
-        const assetDir = path.join(publicAssetsRoot, slugToFsPath(row.slug));
-        fs.rmSync(assetDir, { recursive: true, force: true });
-      }
+      await pruneMissing(client, seenSlugs);
     }
 
     await client.query("COMMIT");
-    console.log(`Imported ${files.length} markdown files from ${notesRoot}`);
+    console.log(`Imported ${files.length} markdown files from ${notesRoot} (${collection})`);
     if (pruneMode) {
-      console.log("Prune mode: removed notes missing from local folder.");
+      console.log("Prune mode: removed files missing from the local folder.");
     }
   } catch (error) {
     await client.query("ROLLBACK");

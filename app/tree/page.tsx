@@ -10,14 +10,14 @@ function getLocalItems(directoryName: string, typeName: string) {
   let items: any[] = [];
   try {
     if (fs.existsSync(dirPath)) {
-      const fileNames = fs.readdirSync(dirPath).filter(f => f.endsWith('.md'));
+      const fileNames = fs.readdirSync(dirPath).filter(f => /\.(md|markdown)$/i.test(f));
       items = fileNames.map(fileName => {
         const fullPath = path.join(dirPath, fileName);
         // 🌟 核心：把 content（正文内容）和 data（头部参数）解构出来！
         const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
 
         // 提取真正的文件名作为路由 slug
-        const realSlug = fileName.replace(/\.md$/, '');
+        const realSlug = fileName.replace(/\.(md|markdown)$/i, '');
 
         return {
           id: data.id || realSlug,

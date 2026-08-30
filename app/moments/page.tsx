@@ -11,6 +11,18 @@ export const metadata = {
   description: "生活动态与瞬间记录",
 };
 
+export const dynamic = "force-dynamic";
+
+function findMarkdownFiles(directory: string, baseDirectory = directory): string[] {
+  if (!fs.existsSync(directory)) return [];
+
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return findMarkdownFiles(fullPath, baseDirectory);
+    return /\.(md|markdown)$/i.test(entry.name) ? [path.relative(baseDirectory, fullPath)] : [];
+  });
+}
+
 export default function MomentsPage() {
   let allMoments: any[] = [];
 
@@ -22,13 +34,13 @@ export default function MomentsPage() {
 
     possibleDirs.forEach(dir => {
       if (fs.existsSync(dir)) {
-        const fileNames = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+        const fileNames = findMarkdownFiles(dir);
         fileNames.forEach(fileName => {
           const fullPath = path.join(dir, fileName);
           const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
 
           allMoments.push({
-            id: fileName.replace(/\.md$/, ''),
+            id: data.id || fileName.replace(/\.(md|markdown)$/i, '').replace(/\\/g, '/'),
             date: data.date || '1970-01-01',
             location: data.location || '',
             images: data.images || [],

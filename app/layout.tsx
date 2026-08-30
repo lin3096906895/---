@@ -62,10 +62,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <div id="app-mount-root" className="flex-1 flex flex-col transition-opacity duration-1000">
               <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                 {!siteConfig.useGradient && <BackgroundSlider />}
-                <div className="absolute inset-0 z-[-9] bg-white/8 dark:bg-slate-950/14 backdrop-blur-0 transition-colors duration-1000" />
+                <div className="absolute inset-0 z-[-9] bg-white/4 dark:bg-slate-950/8 backdrop-blur-0 transition-colors duration-1000" />
 
                 <div
-                  className="absolute inset-0 z-[-8] opacity-18 dark:opacity-8 mix-blend-color transition-opacity duration-1000 transform-gpu"
+                  className="absolute inset-0 z-[-8] opacity-10 dark:opacity-5 mix-blend-color transition-opacity duration-1000 transform-gpu"
                   style={{
                     background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})`,
                     backgroundSize: "400% 400%",

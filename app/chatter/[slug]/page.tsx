@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 // 🌟 核心升级：引入 Next.js 现代统一解析流
 import { unified } from 'unified';
@@ -24,19 +25,27 @@ import SidebarLyric from '../../../components/SidebarLyric';
 import BackButton from '../../../components/BackButton';
 import Comments from '../../../components/Comments';
 
+export const dynamic = "force-dynamic";
+
 export async function generateStaticParams() {
   const chattersDirectory = path.join(process.cwd(), 'chatters');
   if (!fs.existsSync(chattersDirectory)) return [];
   const filenames = fs.readdirSync(chattersDirectory);
   return filenames
-    .filter((name) => name.endsWith('.md'))
+    .filter((name) => /\.(md|markdown)$/i.test(name))
     .map((name) => ({
-      slug: name.replace(/\.md$/, ''),
+      slug: name.replace(/\.(md|markdown)$/i, ''),
     }));
 }
 
 async function getChatterData(slug: string) {
-  const fullPath = path.join(process.cwd(), 'chatters', `${slug}.md`);
+  const chattersDirectory = path.join(process.cwd(), 'chatters');
+  const safeSlug = path.basename(slug);
+  const extension = ['.md', '.markdown'].find((candidate) => fs.existsSync(path.join(chattersDirectory, `${safeSlug}${candidate}`)));
+  if (safeSlug !== slug || !extension) {
+    notFound();
+  }
+  const fullPath = path.join(chattersDirectory, `${safeSlug}${extension}`);
   const fileContents = fs.readFileSync(fullPath, 'utf8');
 
   let { data, content } = matter(fileContents);
@@ -104,11 +113,11 @@ async function getChatterData(slug: string) {
 function getRecentChatters(currentSlug: string) {
   const chattersDirectory = path.join(process.cwd(), 'chatters');
   let fileNames: string[] = [];
-  try { fileNames = fs.readdirSync(chattersDirectory).filter(f => f.endsWith('.md')); } catch(e) {}
+  try { fileNames = fs.readdirSync(chattersDirectory).filter(f => /\.(md|markdown)$/i.test(f)); } catch(e) {}
   if (!fileNames) return [];
 
   return fileNames.map(f => {
-    const s = f.replace(/\.md$/, '');
+    const s = f.replace(/\.(md|markdown)$/i, '');
     const c = fs.readFileSync(path.join(chattersDirectory, f), 'utf8');
     const { data } = matter(c);
     return { slug: s, title: data.title || '碎片记录', date: data.date || '1970-01-01' };

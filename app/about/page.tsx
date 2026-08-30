@@ -24,7 +24,7 @@ function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈' | '说
   const dirPath = path.join(process.cwd(), dirName);
   if (!fs.existsSync(dirPath)) return [];
 
-  const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.md'));
+  const files = fs.readdirSync(dirPath).filter(f => /\.(md|markdown)$/i.test(f));
 
   return files.map(file => {
     const content = fs.readFileSync(path.join(dirPath, file), 'utf8');
@@ -32,9 +32,9 @@ function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈' | '说
     return {
       id: `${dirName}-${file}`,
       type: typeLabel,
-      title: data.title || file.replace('.md', ''),
+      title: data.title || file.replace(/\.(md|markdown)$/i, ''),
       date: data.date ? new Date(data.date).toISOString() : '1970-01-01T00:00:00Z',
-      url: `/${linkPrefix}/${file.replace('.md', '')}`
+      url: `/${linkPrefix}/${file.replace(/\.(md|markdown)$/i, '')}`
     };
   });
 }
