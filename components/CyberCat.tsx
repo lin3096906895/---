@@ -1,18 +1,62 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { Send } from 'lucide-react';
+import NahidaLive2D from './NahidaLive2D';
+
+type ConversationMessage = {
+  role: 'user' | 'model';
+  content: string;
+};
+
+const PAGE_NAMES: Record<string, string> = {
+  '/': '博客首页',
+  '/projects': '项目页面',
+  '/archive': '归档页面',
+  '/notes': '笔记页面',
+  '/photowall': '照片墙页面',
+  '/music': '音乐页面',
+  '/tree': '灵境页面',
+  '/chatter': '杂谈页面',
+  '/moments': '说说页面',
+  '/friends': '友链页面',
+  '/about': '关于页面',
+};
 
 export default function CyberCat() {
   const [isPetted, setIsPetted] = useState(false);
   const [speech, setSpeech] = useState<string | null>(null);
-  const [showInput, setShowInput] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [live2dFailed, setLive2dFailed] = useState(false);
+  const [conversation, setConversation] = useState<ConversationMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
 
-  const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('nahida-conversation') || '[]');
+      return Array.isArray(saved)
+        ? saved
+          .filter((item): item is ConversationMessage => {
+            return item?.role === 'user' || item?.role === 'model';
+          })
+          .filter((item) => typeof item.content === 'string' && item.content.trim())
+          .map((item) => ({ role: item.role, content: item.content.trim().slice(0, 1200) }))
+          .slice(-10)
+        : [];
+    } catch {
+      return [];
+    }
+  });
+  const dragControls = useDragControls();
 
-  // --- 💬 说话功能 ---
+  const chatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLive2dError = useCallback(() => {
+    setLive2dFailed(true);
+  }, []);
+
   const speak = (text: string, duration = 6000) => {
     setSpeech(text);
     if (chatTimeoutRef.current) clearTimeout(chatTimeoutRef.current);
@@ -21,119 +65,156 @@ export default function CyberCat() {
     }, duration);
   };
 
-  // --- 🖱️ 交互事件：摸猫猫 ---
+
   const handlePetCat = () => {
     if (isPetted) return;
     setIsPetted(true);
-    speak("呼噜噜... 摸得本喵很舒服喵~", 2000);
+    speak("你是在和我打招呼吗？我听见了。", 3000);
     setTimeout(() => {
       setIsPetted(false);
     }, 2000);
   };
 
-  // --- 🐟 交互事件：喂小鱼干 ---
-  const handleFeed = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止触发摸猫或拖拽
+  const getPageContext = () => {
+    const pathname = window.location.pathname;
+    const pageName = PAGE_NAMES[pathname]
+      || (pathname.startsWith('/notes/') ? '笔记详情页面' : null)
+      || (pathname.startsWith('/chatter/') ? '杂谈详情页面' : null)
+      || (pathname.startsWith('/posts/') ? '文章详情页面' : null)
+      || '博客页面';
+
+    const excerpt = document.querySelector('main')?.textContent
+      ?.replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 1600) || '';
+
+    return { pathname, pageName, title: document.title, excerpt };
+  };
+
+  const askAssistant = async (message: string, thinkingText: string) => {
     if (isThinking) return;
 
-    setShowInput(false); // 喂食时关掉输入框
     setIsThinking(true);
-    speak("嗷呜！真好吃喵！本喵吃饱了要说两句...", 6000);
+    setConversation((current) => [
+      ...current,
+      { role: 'user', content: message },
+    ].slice(-10));
+    speak(thinkingText, 12000);
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: "我刚刚喂了你一条美味的小鱼干！你有什么表示？" }),
+        body: JSON.stringify({
+          message,
+          history: conversation,
+          context: getPageContext(),
+        }),
       });
 
-      if (!res.ok) throw new Error('API Error');
-
       const data = await res.json();
-      speak(data.reply, 8000);
+      if (!res.ok) throw new Error(data.error || 'AI 服务暂时不可用');
+
+      const reply = typeof data.reply === 'string' && data.reply.trim()
+        ? data.reply.trim()
+        : '知识树暂时没有传来清晰的回声，请稍后再试。';
+
+      setConversation((current) => [
+        ...current,
+        { role: 'model', content: reply },
+      ].slice(-10));
+      speak(reply, 20000);
     } catch (error) {
-      speak("吧唧吧唧... 鱼干好吃，但本喵卡壳了喵...", 4000);
+      const fallback = error instanceof Error && error.message.includes('尚未配置')
+        ? '我的思维之树还没有接入 AI 服务。配置 POKE_API_KEY 后，我就能真正理解你的问题了。'
+        : error instanceof Error && error.message.includes('无法连接 Poke API')
+          ? '我已经准备好了，但当前网络还连接不到 Poke API。请检查网络出口或配置 HTTPS_PROXY。'
+        : '刚才的思绪没有连上知识树，请稍后再试一次。';
+      setConversation((current) => [
+        ...current,
+        { role: 'model', content: fallback },
+      ].slice(-10));
+      speak(fallback, 6000);
     } finally {
       setIsThinking(false);
     }
   };
 
-  // --- 💬 交互事件：发送聊天 ---
+  const handleInspiration = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowChat(false);
+    const { pageName } = getPageContext();
+    await askAssistant(
+      `请结合我正在浏览的“${pageName}”，给我一个简短但具体的思考方向、学习建议或改进灵感。不要泛泛地说“继续努力”，直接给出一条有用的建议。`,
+      '让我从知识树上找一片适合此刻的叶片……',
+    );
+  };
+
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isThinking) return;
 
-    const userMessage = inputValue;
+    const userMessage = inputValue.trim();
     setInputValue('');
-    setShowInput(false);
-    setIsThinking(true);
-    speak("让本喵想想喵...", 10000);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
-      });
-
-      if (!res.ok) throw new Error('API Error');
-
-      const data = await res.json();
-      speak(data.reply, 8000);
-    } catch (error) {
-      speak("铲屎官的网线被老鼠咬断了吧？喵！", 4000);
-    } finally {
-      setIsThinking(false);
-    }
+    setShowChat(false);
+    await askAssistant(userMessage, '让我听清你的问题，再认真想一想……');
   };
 
-  // --- ⏳ 随机挂机语录 ---
   useEffect(() => {
-    const randomBarks = [
-      "喵呜~ 今天天气真不错喵~",
-      "好困哦，想睡觉喵...",
-      "铲屎官，快去敲代码！",
-      "我的小鱼干藏哪里去了？",
-      "怎么没人理本喵...",
+    window.localStorage.setItem('nahida-conversation', JSON.stringify(conversation.slice(-10)));
+  }, [conversation]);
+
+  useEffect(() => {
+    const quietThoughts = [
+      '风吹过知识树时，总会带来一些新的想法。',
+      '今天也可以给自己留一点时间，整理正在学习的东西。',
+      '一个小问题认真追下去，常常会通向更大的理解。',
+      '如果你正在犹豫，不妨先把最小的一步写下来。',
+      '我会把这里的每一片叶子都记得清清楚楚。',
     ];
     const randomTalkInterval = setInterval(() => {
-      if (!speech && !showInput && !isThinking && Math.random() > 0.8) {
-        const randomMsg = randomBarks[Math.floor(Math.random() * randomBarks.length)];
+      if (!speech && !showChat && !isThinking && Math.random() > 0.8) {
+        const randomMsg = quietThoughts[Math.floor(Math.random() * quietThoughts.length)];
         speak(randomMsg, 4000);
       }
     }, 20000);
 
     return () => clearInterval(randomTalkInterval);
-  }, [speech, showInput, isThinking]);
+  }, [speech, showChat, isThinking]);
 
+  const live2dMood = isThinking ? 'thinking' : isPetted ? 'happy' : speech ? 'speaking' : 'idle';
 
   return (
     <motion.div
       drag
+      dragControls={dragControls}
+      dragListener={false}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.1}
       whileDrag={{ scale: 1.1, cursor: "grabbing" }}
-      className="fixed bottom-20 right-20 z-[9999] flex flex-col items-center group cursor-grab active:cursor-grabbing"
+      className="fixed bottom-16 right-3 z-[9999] flex flex-col items-center group cursor-grab active:cursor-grabbing md:bottom-20 md:right-10 lg:right-20"
     >
       {/* 💬 聊天气泡 */}
       <div className="relative w-full flex justify-center mb-6">
         <AnimatePresence>
-          {speech && (
+          {speech && !showChat && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-              className="absolute bottom-0 bg-white dark:bg-slate-800 text-slate-700 dark:text-gray-200 px-4 py-3 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 text-sm max-w-[240px] break-words text-center leading-relaxed"
-              style={{ pointerEvents: 'none', transformOrigin: 'bottom center' }}
+              className="absolute bottom-0 max-h-[220px] w-[min(23rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl border border-emerald-200/80 bg-emerald-50/95 px-4 py-3 text-left text-sm leading-relaxed text-emerald-950 shadow-xl dark:border-emerald-800/80 dark:bg-emerald-950/95 dark:text-emerald-50"
+              style={{ pointerEvents: 'auto', transformOrigin: 'bottom center' }}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
               {speech}
-              <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-slate-800 border-b border-r border-gray-100 dark:border-slate-700 transform rotate-45"></div>
+              <div className="absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-50 dark:bg-emerald-950 border-b border-r border-emerald-200 dark:border-emerald-800 transform rotate-45"></div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* 🐈 猫咪本体 & 交互按钮区 */}
+      {/* 纳西妲互动区 */}
       <div className="relative">
 
         {/* 🌟 核心修改区：去掉了 opacity-0 和 group-hover，让按钮常驻显示 */}
@@ -143,97 +224,107 @@ export default function CyberCat() {
             <button
               onClick={(e) => {
                  e.stopPropagation();
-                 setShowInput(!showInput);
+                 setShowChat((current) => !current);
               }}
               // 稍微加了一点半透明背景，让常驻按钮在深色背景下也好看
-              className="bg-white/90 dark:bg-slate-700/90 p-2.5 rounded-full shadow-md hover:scale-110 active:scale-95 transition-transform border border-gray-100 dark:border-slate-600 text-blue-500 hover:text-blue-600 flex items-center justify-center backdrop-blur-sm"
+              className="bg-white/90 dark:bg-slate-700/90 p-2.5 rounded-full shadow-md hover:scale-110 active:scale-95 transition-transform border border-emerald-200/70 dark:border-emerald-900/60 text-emerald-600 hover:text-emerald-700 flex items-center justify-center backdrop-blur-sm"
               title="聊天"
+              aria-label="聊天"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 006 21.75a6.721 6.721 0 003.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 01-.814 1.686.75.75 0 00.44 1.223zM8.25 10.875a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.875 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" clipRule="evenodd" />
               </svg>
             </button>
 
-            {/* 🐟 喂食按钮 */}
+            {/* 获取灵感按钮 */}
             <button
-              onClick={handleFeed}
+              onClick={handleInspiration}
               disabled={isThinking}
               className={`bg-white/90 dark:bg-slate-700/90 p-2.5 rounded-full shadow-md hover:scale-110 active:scale-95 transition-transform border border-gray-100 dark:border-slate-600 flex items-center justify-center backdrop-blur-sm ${isThinking ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title="喂小鱼干"
+              title="获取灵感"
+              aria-label="获取灵感"
             >
-              <span className="text-xl leading-none">🐟</span>
+              <span className="text-xl leading-none text-emerald-600">✦</span>
             </button>
         </div>
 
-        {/* 猫咪图片容器 */}
+        {/* Live2D 模型容器 */}
         <div
-          className="w-[120px] h-[120px] relative cursor-pointer"
+          className="w-[176px] h-[232px] md:w-[200px] md:h-[264px] relative cursor-pointer"
+          onPointerDown={(event) => {
+            if (event.button === 0) dragControls.start(event);
+          }}
           onClick={handlePetCat}
         >
-          <style>{`
-            .cat-sprite {
-              width: 100%;
-              height: 100%;
-              background-image: url('/siamese-cat.png'); 
-              background-size: 300% 300%; 
-              background-repeat: no-repeat;
-              image-rendering: pixelated; 
-            }
-            .cat-idle {
-              animation: idle-frames 1.2s infinite;
-              background-position-y: 0%; 
-            }
-            .cat-petted {
-              animation: pet-frames 0.8s infinite;
-              background-position-y: 50%; 
-            }
-            .cat-thinking {
-              animation: idle-frames 0.6s infinite;
-              background-position-y: 0%; 
-            }
-            @keyframes idle-frames {
-              0%, 33.32% { background-position-x: 0%; }
-              33.33%, 66.65% { background-position-x: 50%; }
-              66.66%, 100% { background-position-x: 100%; }
-            }
-            @keyframes pet-frames {
-              0%, 49.99% { background-position-x: 0%; }
-              50%, 100% { background-position-x: 50%; }
-            }
-          `}</style>
-          <div className={`cat-sprite drop-shadow-2xl ${isPetted ? 'cat-petted' : isThinking ? 'cat-thinking' : 'cat-idle'}`} />
+          <div className="h-full w-full">
+            {!live2dFailed ? (
+              <NahidaLive2D
+                onError={handleLive2dError}
+                mood={live2dMood}
+                speaking={Boolean(speech) && !isThinking}
+              />
+            ) : (
+              <>
+                <style>{`
+                .cat-sprite {
+                  width: 100%;
+                  height: 100%;
+                  background-image: url('/siamese-cat.png');
+                  background-size: 300% 300%;
+                  background-repeat: no-repeat;
+                  image-rendering: pixelated;
+                }
+                .cat-idle { animation: idle-frames 1.2s infinite; background-position-y: 0%; }
+                .cat-petted { animation: pet-frames 0.8s infinite; background-position-y: 50%; }
+                .cat-thinking { animation: idle-frames 0.6s infinite; background-position-y: 0%; }
+                @keyframes idle-frames {
+                  0%, 33.32% { background-position-x: 0%; }
+                  33.33%, 66.65% { background-position-x: 50%; }
+                  66.66%, 100% { background-position-x: 100%; }
+                }
+                @keyframes pet-frames {
+                  0%, 49.99% { background-position-x: 0%; }
+                  50%, 100% { background-position-x: 50%; }
+                }
+                `}</style>
+                <div className={`cat-sprite drop-shadow-2xl ${isPetted ? 'cat-petted' : isThinking ? 'cat-thinking' : 'cat-idle'}`} />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ⌨️ 互动输入框 */}
+      {/* ⌨️ 轻量聊天输入框 */}
       <AnimatePresence>
-        {showInput && (
+        {showChat && (
           <motion.form
-            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            initial={{ opacity: 0, y: -10, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.9 }}
+            exit={{ opacity: 0, y: -10, scale: 0.92 }}
             onSubmit={handleChatSubmit}
-            className="absolute -bottom-14 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg flex items-center border border-gray-200 dark:border-slate-700 w-56 z-20"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            className="absolute -bottom-14 right-0 z-30 flex w-[min(20rem,calc(100vw-1.5rem))] items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/95 p-1.5 shadow-xl backdrop-blur-md dark:border-emerald-800/80 dark:bg-emerald-950/95"
           >
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="跟煤球说点啥喵..."
-              className="bg-transparent border-none outline-none text-sm px-3 py-1 w-full dark:text-white placeholder-gray-400"
+              placeholder="和纳西妲聊聊..."
+              className="min-w-0 flex-1 bg-transparent px-3 py-1.5 text-sm text-emerald-950 outline-none placeholder-emerald-700/60 dark:text-emerald-50 dark:placeholder-emerald-300/60"
               disabled={isThinking}
               autoFocus
             />
             <button
               type="submit"
               disabled={isThinking || !inputValue.trim()}
-              className={`rounded-full p-1.5 ml-1 flex items-center justify-center transition-colors ${
-                isThinking || !inputValue.trim() ? 'bg-gray-300 text-gray-500' : 'bg-blue-500 hover:bg-blue-600 text-white'
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
+                isThinking || !inputValue.trim() ? 'bg-emerald-200 text-emerald-500 dark:bg-emerald-900 dark:text-emerald-700' : 'bg-emerald-500 text-white hover:bg-emerald-600'
               }`}
+              title="发送消息"
+              aria-label="发送消息"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z" />
-              </svg>
+              <Send className="h-4 w-4" />
             </button>
           </motion.form>
         )}
