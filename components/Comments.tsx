@@ -5,42 +5,50 @@ import { usePathname } from 'next/navigation';
 import 'gitalk/dist/gitalk.css';
 import Gitalk from 'gitalk';
 
-// 🌟 引入全局配置，读取你的 GitHub OAuth 凭证
-import { siteConfig } from '../siteConfig'; // 如果路径报错，请检查层级是否需要改成 '../../siteConfig'
+import { loadGitalkConfig } from '../lib/gitalk-config';
 
 export default function Comments() {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    let cancelled = false;
 
-    // 清空之前的评论区（防止 Next.js 路由切换时重复渲染）
-    containerRef.current.innerHTML = '';
+    async function renderComments() {
+      try {
+        const config = await loadGitalkConfig();
+        if (cancelled || !containerRef.current) return;
 
-    const gitalk = new Gitalk({
-      clientID: siteConfig.gitalkConfig.clientID,
-      clientSecret: siteConfig.gitalkConfig.clientSecret,
-      repo: siteConfig.gitalkConfig.repo,
-      owner: siteConfig.gitalkConfig.owner,
-      admin: siteConfig.gitalkConfig.admin,
+        // 清空之前的评论区（防止 Next.js 路由切换时重复渲染）
+        containerRef.current.innerHTML = '';
 
-      // 👇 指向我们自己的同源 API，彻底告别跨域和第三方拦截！
-      proxy: '/api/github',
+        const gitalk = new Gitalk({
+          ...config,
+          // 指向我们自己的同源 API，避免浏览器跨域拦截。
+          proxy: '/api/github',
+          id: (pathname.replace(/\/$/, '') || '/').substring(0, 49),
+          distractionFreeMode: false,
+        });
 
-      id: (pathname.replace(/\/$/, '') || '/').substring(0, 49),
-      distractionFreeMode: false,
-    });
+        gitalk.render(containerRef.current);
 
-    gitalk.render(containerRef.current);
-
-    // 👇 🌟 核心修复：擦除 URL 中的 OAuth 凭证，防止注销后二次登录失败
-    const url = new URL(window.location.href);
-    if (url.searchParams.has('code')) {
-      url.searchParams.delete('code');
-      // 使用 replaceState 无痕修改地址栏，页面不会刷新，也不会留下历史记录
-      window.history.replaceState({}, document.title, url.toString());
+        // 擦除 URL 中的 OAuth 凭证，防止刷新后二次登录失败。
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('code')) {
+          url.searchParams.delete('code');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      } catch (error) {
+        console.error('Gitalk 初始化失败:', error);
+      }
     }
+
+    renderComments();
+
+    return () => {
+      cancelled = true;
+      if (containerRef.current) containerRef.current.innerHTML = '';
+    };
 
   }, [pathname]);
 

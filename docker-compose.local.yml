@@ -1,0 +1,22 @@
+services:
+  blog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: xhblogs-local
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      NOTES_DATABASE_URL: postgres://xhblogs:xhblogs123@notes-db:5432/xhblogs_notes
+    ports:
+      - "3200:3000"
+    volumes:
+      - ../../归档:/归档:ro
+    networks:
+      - xhblogs_default
+
+networks:
+  xhblogs_default:
+    external: true

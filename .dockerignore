@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+out
+build
+coverage
+*.log
+*.err
+.env*
+.vercel
+.idea
+README*.md
+AGENTS.md
+CLAUDE.md

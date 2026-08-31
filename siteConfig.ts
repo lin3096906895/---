@@ -65,9 +65,9 @@ export const siteConfig = {
   gitalkConfig: {
     clientID: "",
     clientSecret: "",
-    repo: "",
-    owner: "",
-    admin: [""],
+    repo: "---",
+    owner: "lin3096906895",
+    admin: ["lin3096906895"],
   },
   buildDate: "2026-08-29T00:00:00",
   footerBadges: [

@@ -12,6 +12,10 @@ export const metadata = {
   title: "归档与探索 | " + siteConfig.title,
 };
 
+// 归档目录通过 Docker 运行时挂载，不能在构建阶段预渲染。
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 function normalizeDate(value: unknown) {
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) return "1970-01-01";

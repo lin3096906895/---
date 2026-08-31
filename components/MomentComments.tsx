@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import 'gitalk/dist/gitalk.css';
 import Gitalk from 'gitalk';
-import { siteConfig } from '../siteConfig';
+import { loadGitalkConfig } from '../lib/gitalk-config';
 
 interface MomentCommentsProps {
   id: string; // 必须传入说说的专属 ID
@@ -13,23 +13,36 @@ export default function MomentComments({ id }: MomentCommentsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    let cancelled = false;
 
-    // 清空重载，防止 React 严格模式下重复渲染
-    containerRef.current.innerHTML = '';
+    async function renderComments() {
+      try {
+        const config = await loadGitalkConfig();
+        if (cancelled || !containerRef.current) return;
 
-    const gitalk = new Gitalk({
-      clientID: siteConfig.gitalkConfig.clientID,
-      clientSecret: siteConfig.gitalkConfig.clientSecret,
-      repo: siteConfig.gitalkConfig.repo,
-      owner: siteConfig.gitalkConfig.owner,
-      admin: siteConfig.gitalkConfig.admin,
-      // 截取前49个字符作为 GitHub Issue 的 Label（Gitalk 的要求）
-      id: id.substring(0, 49),
-      distractionFreeMode: false,
-    });
+        // 清空重载，防止 React 严格模式下重复渲染。
+        containerRef.current.innerHTML = '';
 
-    gitalk.render(containerRef.current);
+        const gitalk = new Gitalk({
+          ...config,
+          proxy: '/api/github',
+          // 截取前49个字符作为 GitHub Issue 的 Label（Gitalk 的要求）
+          id: id.substring(0, 49),
+          distractionFreeMode: false,
+        });
+
+        gitalk.render(containerRef.current);
+      } catch (error) {
+        console.error('Gitalk 初始化失败:', error);
+      }
+    }
+
+    renderComments();
+
+    return () => {
+      cancelled = true;
+      if (containerRef.current) containerRef.current.innerHTML = '';
+    };
   }, [id]);
 
   return (

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import 'gitalk/dist/gitalk.css';
 import Gitalk from 'gitalk';
 
-import { siteConfig } from '../siteConfig';
+import { loadGitalkConfig } from '../lib/gitalk-config';
 
 // 🌟 专门为炼金实验室定制的 Gitalk 组件，不影响原有的 Comments.tsx
 export default function LabComments({ pageId }: { pageId?: string }) {
@@ -13,33 +13,45 @@ export default function LabComments({ pageId }: { pageId?: string }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    let cancelled = false;
 
-    // 清空之前的评论区，防止切换月份时叠加
-    containerRef.current.innerHTML = '';
+    async function renderComments() {
+      try {
+        const config = await loadGitalkConfig();
+        if (cancelled || !containerRef.current) return;
 
-    // 优先使用传入的 pageId (如 workshop-2026-05)
-    const finalId = (pageId || pathname.replace(/\/$/, '') || '/').substring(0, 49);
+        // 清空之前的评论区，防止切换月份时叠加。
+        containerRef.current.innerHTML = '';
 
-    const gitalk = new Gitalk({
-      clientID: siteConfig.gitalkConfig.clientID,
-      clientSecret: siteConfig.gitalkConfig.clientSecret,
-      repo: siteConfig.gitalkConfig.repo,
-      owner: siteConfig.gitalkConfig.owner,
-      admin: siteConfig.gitalkConfig.admin,
-      proxy: '/api/github',
-      id: finalId, // 这里的 ID 决定了留言板对应 GitHub 的哪个 Issue
-      distractionFreeMode: false,
-    });
+        // 优先使用传入的 pageId (如 workshop-2026-05)
+        const finalId = (pageId || pathname.replace(/\/$/, '') || '/').substring(0, 49);
 
-    gitalk.render(containerRef.current);
+        const gitalk = new Gitalk({
+          ...config,
+          proxy: '/api/github',
+          id: finalId, // 这里的 ID 决定了留言板对应 GitHub 的哪个 Issue
+          distractionFreeMode: false,
+        });
 
-    // 擦除 URL 中的 OAuth 凭证，防止刷新报错
-    const url = new URL(window.location.href);
-    if (url.searchParams.has('code')) {
-      url.searchParams.delete('code');
-      window.history.replaceState({}, document.title, url.toString());
+        gitalk.render(containerRef.current);
+
+        // 擦除 URL 中的 OAuth 凭证，防止刷新报错。
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('code')) {
+          url.searchParams.delete('code');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      } catch (error) {
+        console.error('Gitalk 初始化失败:', error);
+      }
     }
+
+    renderComments();
+
+    return () => {
+      cancelled = true;
+      if (containerRef.current) containerRef.current.innerHTML = '';
+    };
 
   }, [pathname, pageId]);
 
