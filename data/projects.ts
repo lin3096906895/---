@@ -34,4 +34,16 @@ export const projectsData: Project[] = [
     coverImage: "/nahida/bg-3.jpg",
     coverPosition: "center 30%",
   },
+  {
+    id: "hpearcl-nahida-garden",
+    name: "Hpearcl的纳西妲花园",
+    githubUrl: "https://github.com/lin3096906895/---",
+    description:
+      "基于 Next.js、React 和 PostgreSQL 打造的纳西妲主题个人博客，记录学习笔记、归档文章、项目实践、音乐、照片和日常想法。",
+    icon: "🌿",
+    tags: ["Next.js", "React", "TypeScript", "PostgreSQL", "Docker"],
+    platform: "github",
+    coverImage: "/nahida/bg-2.jpg",
+    coverPosition: "center 24%",
+  },
 ];
